@@ -42,9 +42,6 @@ pip install -r requirements.txt
 # Show help
 python proxyreaper2.py --help
 
-# Display banner
-python proxyreaper2.py --banner
-
 # Show version
 python proxyreaper2.py --version
 
@@ -89,7 +86,6 @@ python proxyreaper2.py https://example.com -p proxies.txt -c 20
 | `--timeout` | `-t` | Timeout in seconds (default: 5) |
 | `--output` | `-o` | Save results as JSON or CSV |
 | `--response-time` | `-R` | Filter for fast proxies (maximum response time in milliseconds) |
-| `--banner` | `-b` | Display banner |
 | `--version` | `-v` | Show version information |
 | `--fast-only` | `-f` | Save only fast proxies in the output file |
 | `--concurrent` | `-c` | Number of concurrent checks (default: 10) |
