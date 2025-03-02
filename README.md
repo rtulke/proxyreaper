@@ -4,6 +4,10 @@
 
 Proxy Reaper is a powerful Python tool for checking proxy servers for availability, speed, and anonymity. The tool supports various protocols such as HTTP, HTTPS, SOCKS4, and SOCKS5.
 
+I was looking into the subject of proxies a while ago and I noticed that many of the lists available on the Internet stopped working shortly after most of the proxies were published. This is quite annoying, especially if you have lists with over 11,000 proxies and now have to test them manually :D. 
+
+So I wrote a tool to solve exactly this problem. It tests proxies.
+
 ## Features
 
 - Concurrent checking of multiple proxies
