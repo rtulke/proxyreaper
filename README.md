@@ -175,6 +175,9 @@ http://5.6.7.8:3128
 - **Anonymous (Header leak)**: The proxy hides your IP but reveals that it's a proxy.
 - **Anonymous**: The proxy hides your IP and doesn't reveal that it's a proxy.
 
+## Proxy Lists
+- https://github.com/topics/proxy-list
+
 ## License
 
 MIT License
