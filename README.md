@@ -52,11 +52,11 @@ or use the requirements.txt file:
 
 #### Linux / MacOS
 ```bash
-cd proxyreaper 
+cd proxyreaper
+chmod +x proxyreaper.py
 python -m venv venv
 source source venv/bin/activate
 pip install -r requirements.txt
-
 ```
 
 #### Windows 
@@ -66,7 +66,6 @@ cd proxyreaper
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-
 ```
 
 ## Basic Usage
