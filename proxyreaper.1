@@ -1,0 +1,195 @@
+.\" Manpage for proxyreaper
+.\" Contact rt@debian.sh to correct errors or typos.
+.TH PROXYREAPER 1 "March 2025" "Proxy Reaper 2.0.1" "User Commands"
+.SH NAME
+proxyreaper \- test proxies for availability, speed, and anonymity
+.SH SYNOPSIS
+.B proxyreaper
+[\fIOPTIONS\fR]... [\fIURL\fR]
+.SH DESCRIPTION
+.B proxyreaper
+is a tool that tests HTTP, HTTPS, SOCKS4, and SOCKS5 proxies for availability, response time, and anonymity level. It supports parallel testing, geolocation detection, multiple export formats, and automatic proxy list updates.
+.SH OPTIONS
+.TP
+.BR \fIURL\fR
+The URL to test the proxies against (default: https://www.google.com)
+.TP
+.BR \-p ", " \-\-proxy=\fIPROXY\fR
+Proxy or file with proxies (comma-separated or .txt file)
+.TP
+.BR \-t ", " \-\-timeout=\fISECONDS\fR
+Timeout in seconds (default: 5)
+.TP
+.BR \-o ", " \-\-output=\fIFORMAT\fR
+Save results in specified format. Available formats: json, csv, sqlite, txt
+.TP
+.BR \-R ", " \-\-response-time=\fIMILLISECONDS\fR
+Filter for fast proxies (maximum response time in milliseconds)
+.TP
+.BR \-v ", " \-\-version
+Display version information and exit
+.TP
+.BR \-f ", " \-\-fast-only
+Save only fast proxies to the output file
+.TP
+.BR \-c ", " \-\-concurrent=\fICOUNT\fR
+Number of concurrent checks (default: 10)
+.TP
+.BR \-d ", " \-\-debug
+Enable detailed debug output
+.TP
+.BR \-A ", " \-\-automatic-mode
+Download proxy lists from configured URLs
+.TP
+.BR \-\-config
+Create default config file in ~/.proxyreaper.conf
+.SH CONFIGURATION
+Proxy Reaper uses configuration files in the following order of precedence:
+.TP
+1. Command-line arguments
+.TP
+2. ~/.proxyreaper.conf (user-specific configuration)
+.TP
+3. /etc/proxyreaper.conf (system-wide configuration)
+.TP
+4. Default values
+.PP
+To create a default configuration file:
+.PP
+.nf
+.RS
+proxyreaper --config
+.RE
+.fi
+.PP
+The configuration file uses the INI format with the following sections:
+.PP
+.nf
+.RS
+[general]
+timeout = 5
+concurrent = 10
+response_time_filter = 1000
+test_url = https://www.google.com
+
+[output]
+format = json
+fast_only = false
+save_directory = results
+
+[proxysources]
+urls = https://raw.githubusercontent.com/username/proxy-list/main/proxies.txt, https://some-proxy-list.com/proxies.txt
+
+[advanced]
+debug = false
+anonymity_check_url = https://httpbin.org/get
+.RE
+.fi
+.SH PROXY FORMATS
+Proxy Reaper supports several proxy formats:
+.TP
+\fIhost:port\fR (e.g., 127.0.0.1:8080) - Defaults to HTTP protocol
+.TP
+\fIprotocol://host:port\fR (e.g., http://127.0.0.1:8080)
+.TP
+\fIprotocol://username:password@host:port\fR (e.g., http://user:pass@127.0.0.1:8080)
+.PP
+Supported protocols:
+.TP
+\fBHTTP\fR
+.TP
+\fBHTTPS\fR
+.TP
+\fBSOCKS4\fR
+.TP
+\fBSOCKS5\fR
+.SH ANONYMITY LEVELS
+Proxy Reaper categorizes proxies into different anonymity levels:
+.TP
+\fBHigh Anonymous\fR
+Your IP address and proxy status are completely hidden
+.TP
+\fBAnonymous\fR
+Your IP address is hidden, but the server knows you're using a proxy
+.TP
+\fBAnonymous (Header leak)\fR
+Your IP is hidden, but proxy headers are visible
+.TP
+\fBTransparent\fR
+Your original IP address is visible to the server
+.SH OUTPUT FORMATS
+.TP
+\fBJSON\fR
+Detailed proxy information in JSON format
+.TP
+\fBCSV\fR
+Tabular format suitable for spreadsheet applications
+.TP
+\fBSQLite\fR
+SQLite database with a proxies table
+.TP
+\fBTXT\fR
+Simple text file with one proxy per line
+.SH EXAMPLES
+.TP
+Test a single proxy:
+.PP
+.nf
+.RS
+proxyreaper https://www.google.com -p 1.2.3.4:8080
+.RE
+.fi
+.TP
+Test multiple proxies from a file:
+.PP
+.nf
+.RS
+proxyreaper https://www.google.com -p proxies.txt
+.RE
+.fi
+.TP
+Test with 20 concurrent connections and save as CSV:
+.PP
+.nf
+.RS
+proxyreaper https://www.google.com -p proxies.txt -c 20 -o csv
+.RE
+.fi
+.TP
+Only consider proxies with response time under 500ms as "FAST":
+.PP
+.nf
+.RS
+proxyreaper https://www.google.com -p proxies.txt -R 500
+.RE
+.fi
+.TP
+Use automatic mode to download proxies from configured URLs:
+.PP
+.nf
+.RS
+proxyreaper https://www.google.com -A
+.RE
+.fi
+.SH FILES
+.TP
+.I ~/.proxyreaper.conf
+User-specific configuration file
+.TP
+.I /etc/proxyreaper.conf
+System-wide configuration file
+.TP
+.I ./results/
+Default directory for saving results
+.SH BUGS
+Report bugs to: rt@debian.sh
+.SH AUTHOR
+Written by Robert Tulke
+.SH COPYRIGHT
+Copyright © 2025 Robert Tulke
+.br
+License MIT: MIT License <https://opensource.org/licenses/MIT>
+.br
+This is free software: you are free to change and redistribute it.
+.SH SEE ALSO
+curl(1), wget(1), socks(1)
