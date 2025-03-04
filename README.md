@@ -140,7 +140,7 @@ python proxyreaper.py https://www.google.com -A
 | `-c, --concurrent` | Number of concurrent checks |
 | `-d, --debug` | Enable detailed debug output |
 | `-A, --automatic-mode` | Download proxy lists from configured URLs |
-| `--config` | Create default config file in ~/.proxyreaper.conf |
+| `-C, --config` | Create default config file in ~/.proxyreaper.conf |
 
 ## Configuration File
 
