@@ -86,7 +86,7 @@ DEFAULT_CONFIG = {
         'save_directory': 'results'
     },
     'proxysources': {
-        'urls': 'https://raw.githubusercontent.com/rtulke/proxyreaper/refs/heads/main/proxy-list/all.txt'  # Comma-separated list of URLs
+        'urls': ''  # Comma-separated list of URLs
     },
     'advanced': {
         'debug': 'false',
