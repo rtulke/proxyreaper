@@ -89,9 +89,9 @@ sudo apt install python3-socks python3-colorama
 
 # copy proxyreaper script to `/usr/local/bin`
 sudo cp proxyreaper.py /usr/local/bin/proxyrepaer
-sudo cp proxyreaper.1 /usr/local/share/man/man1/
 
-# update mandb
+# install man page and updating mandb
+sudo cp proxyreaper.1 /usr/local/share/man/man1/
 sudo mandb
 
 # use the proxyreaper script from any directory
