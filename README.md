@@ -455,7 +455,7 @@ python proxyreaper.py --config
 ## Chat Support
 - ![[<url>|400]]
 - [Telegram Proxy Reaper](https://t.me/proxyreaper)
-- ![foo](https://raw.githubusercontent.com/rtulke/proxyreaper/main/demo/qrcode.png|100)
+- ![foo][https://raw.githubusercontent.com/rtulke/proxyreaper/main/demo/qrcode.png|100]
 
 
 ## License
