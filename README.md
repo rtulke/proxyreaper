@@ -1,4 +1,4 @@
-## Proxy Reaper v2.0.1 - Documentation
+## Proxy Reaper - Documentation
 
 ![Proxy Reaper Banner](https://raw.githubusercontent.com/rtulke/proxyreaper/main/demo/proxyreaper.gif)
 
