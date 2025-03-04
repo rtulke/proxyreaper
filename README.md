@@ -1,8 +1,8 @@
 ## Proxy Reaper - Documentation
 
-![Proxy Reaper Banner](https://raw.githubusercontent.com/rtulke/proxyreaper/main/demo/proxyreaper.gif)
-
 Proxy Reaper is a powerful tool for checking proxy servers for availability, speed and anonymity. It supports various protocols such as HTTP, HTTPS, SOCKS4, and SOCKS5, and offers enhanced features for managing and testing proxies efficiently.
+
+![Proxy Reaper Banner](https://raw.githubusercontent.com/rtulke/proxyreaper/main/demo/proxyreaper.gif)
 
 ## Table of Contents
 
