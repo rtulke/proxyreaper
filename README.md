@@ -68,20 +68,43 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Installing OS wide (Linux)
+## Installing OS wide (Debian based Distributions)
 
 ```bash
 # start as root or try: "sudo su -" or "sudo -i"
 su - root
-cd ~
-mkdir dev
-cd dev
-git clone https://github.com/rtulke/proxyreaper.git
-cd proxyreaper
-chmod +x proxyreaper.py
-pip install -r requirements.txt
-cp proxyreaper.py /usr/local/bin
+sudo cd ~
+
+# create dev directory for development stuff if needed
+sudo mkdir dev
+sudo cd dev
+
+# download via git
+sudo git clone https://github.com/rtulke/proxyreaper.git
+sudo cd proxyreaper
+sudo chmod +x proxyreaper.py
+
+# install dependecies
+sudo apt install python3-socks python3-colorama
+
+# copy proxyreaper script to `/usr/local/bin`
+sudo cp proxyreaper.py /usr/local/bin/proxyrepaer
 sudo cp proxyreaper.1 /usr/local/share/man/man1/
+
+# update mandb
+sudo mandb
+
+# use the proxyreaper script from any directory
+$ proxyreaper -h
+
+# generate new config file
+$ proxyreaper --config
+
+# you can also try to edit the configuration file
+$ vim ~/.proxyreaper.conf
+
+# try using the manual
+$ man proxyreaper
 ```
 
 
