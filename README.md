@@ -17,6 +17,7 @@ Proxy Reaper is a powerful tool for checking proxy servers for availability, spe
 9. [Advanced Features](#advanced-features)
 10. [Troubleshooting](#troubleshooting)
 11. [Examples](#examples)
+12. [Reference Proxy-Lists](#Reference-Proxy-Lists)
 
 ## Installation
 
