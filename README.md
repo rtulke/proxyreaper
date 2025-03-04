@@ -102,7 +102,7 @@ $ proxyreaper -h
 # generate new config file
 $ proxyreaper --config
 
-# you can also try to edit the configuration file
+# you can also try to edit the new generated configuration file
 $ vim ~/.proxyreaper.conf
 
 # try using the manual
