@@ -122,7 +122,7 @@ python proxyreaper.py https://www.google.com -p proxies.txt
 # Create a default configuration file
 python proxyreaper.py --config
 
-# Use automatic mode to download proxies from URLs defined in the config
+# Use automatic mode to download proxies from URLs defined in the config, in the part `[proxysources]`
 python proxyreaper.py https://www.google.com -A
 ```
 
