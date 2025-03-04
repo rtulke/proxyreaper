@@ -449,6 +449,7 @@ python proxyreaper.py --config
 - https://github.com/TheSpeedX/PROXY-List
 - https://github.com/monosans/proxy-list
 - https://github.com/vakhov/fresh-proxy-list
+- https://github.com/proxifly/free-proxy-list
 - https://github.com/topics/proxy-list (GitHub Topics with proxy-list)
 
 ## License
