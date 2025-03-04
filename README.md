@@ -443,6 +443,12 @@ python proxyreaper.py https://www.google.com -p proxies.txt -c 20 -d
 python proxyreaper.py --config
 ```
 
+## Reference Proxy Lists
+- https://github.com/roosterkid/openproxylist
+- https://github.com/TheSpeedX/PROXY-List
+- https://github.com/monosans/proxy-list
+- https://github.com/topics/proxy-list (GitHub Topics with proxy-list)
+
 ## License
 
 MIT License
