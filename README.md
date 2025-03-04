@@ -455,7 +455,3 @@ python proxyreaper.py --config
 ## License
 
 MIT License
-
-## Author
-
-[Robert Tulke](https://tulke.ch)
