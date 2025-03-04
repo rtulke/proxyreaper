@@ -68,7 +68,7 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Installing OS wide (Debian based Distributions)
+### Installing OS wide (Debian based Distributions)
 
 ```bash
 # start as root or try: "sudo su -" or "sudo -i"
