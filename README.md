@@ -7,15 +7,16 @@ Proxy Reaper is a powerful tool for checking proxy servers for availability, spe
 ## Table of Contents
 
 1. [Installation](#installation)
-2. [Basic Usage](#basic-usage)
-3. [Command Line Arguments](#command-line-arguments)
-4. [Configuration File](#configuration-file)
-5. [Proxy Formats and Sources](#proxy-formats-and-sources)
-6. [Anonymity Levels](#anonymity-levels)
-7. [Output Formats](#output-formats)
-8. [Advanced Features](#advanced-features)
-9. [Troubleshooting](#troubleshooting)
-10. [Examples](#examples)
+2. [Installing OS wide (Debian based Distributions)](#Installing-OS-wide)
+3. [Basic Usage](#basic-usage)
+4. [Command Line Arguments](#command-line-arguments)
+5. [Configuration File](#configuration-file)
+6. [Proxy Formats and Sources](#proxy-formats-and-sources)
+7. [Anonymity Levels](#anonymity-levels)
+8. [Output Formats](#output-formats)
+9. [Advanced Features](#advanced-features)
+10. [Troubleshooting](#troubleshooting)
+11. [Examples](#examples)
 
 ## Installation
 
@@ -68,7 +69,7 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Installing OS wide (Debian based Distributions)
+## Installing OS wide (Debian based Distributions)
 
 ```bash
 # start as root or try: "sudo su -" or "sudo -i"
