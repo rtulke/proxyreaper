@@ -70,7 +70,7 @@ pip install -r requirements.txt
 ```
 
 ## Installing OS wide
-The system wide installation works for the most Debian based Distributions, like Debian, Ubuntu, Mint, RaspberryOS, Kali Linux...
+The system wide installation works for the most Debian based Distributions, like Debian, Ubuntu, Mint, Raspberry PI OS, Kali Linux...
 
 ```bash
 # start as root or try: "sudo su -" or "sudo -i"
