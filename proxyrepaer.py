@@ -11,13 +11,13 @@ filtered and saved in a separate file.
 The script supports configuration files at /etc/proxyreaper.conf and ~/.proxyreaper.conf,
 automatic proxy list downloads, and provides detailed anonymity categorization.
 
-Author: Your Name
+Author: Robert Tulke
 License: MIT
 """
 
 # Application configuration
 APP_NAME = "Proxy Reaper"
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 
 import argparse
 import requests
