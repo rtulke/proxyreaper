@@ -444,7 +444,7 @@ python proxyreaper.py https://www.google.com -p proxies.txt -c 20 -d
 python proxyreaper.py --config
 ```
 
-## Reference Proxy Lists
+## Reference Proxy-Lists
 - https://github.com/roosterkid/openproxylist
 - https://github.com/TheSpeedX/PROXY-List
 - https://github.com/monosans/proxy-list
