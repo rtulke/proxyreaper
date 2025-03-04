@@ -91,7 +91,7 @@ python proxyreaper.py https://www.google.com -A
 | `url` | URL to test the proxies against |
 | `-p, --proxy` | Proxy or file with proxies (comma-separated or .txt file) |
 | `-t, --timeout` | Timeout in seconds (default from config) |
-| `-o, --output` | Save results format (json, csv, or sqlite) |
+| `-o, --output` | Save results format (json, csv, txt, or sqlite) |
 | `-R, --response-time` | Filter for fast proxies (maximum response time in milliseconds) |
 | `-v, --version` | Display version information and exit |
 | `-f, --fast-only` | Save only fast proxies to the output file |
