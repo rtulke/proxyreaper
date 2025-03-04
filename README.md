@@ -32,11 +32,11 @@ Proxy Reaper is a powerful tool for checking proxy servers for availability, spe
 
 ```bash
 # Clone the repository (if using Git)
-git clone https://github.com/username/proxy-reaper.git
-cd proxy-reaper
+git clone https://github.com/rtulke/proxyreaper.git
+cd proxyreaper
 
 # Or download the script directly
-wget https://raw.githubusercontent.com/username/proxy-reaper/main/proxyreaper.py
+wget https://raw.githubusercontent.com/rtulke/proxyreaper/main/proxyreaper.py
 chmod +x proxyreaper.py
 ```
 
@@ -67,6 +67,23 @@ python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+## Installing OS wide (Linux)
+
+```bash
+# start as root or try: "sudo su -" or "sudo -i"
+su - root
+cd ~
+mkdir dev
+cd dev
+git clone https://github.com/rtulke/proxyreaper.git
+cd proxyreaper
+chmod +x proxyreaper.py
+pip install -r requirements.txt
+cp proxyreaper.py /usr/local/bin
+sudo cp proxyreaper.1 /usr/local/share/man/man1/
+```
+
 
 ## Basic Usage
 
