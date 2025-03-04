@@ -452,6 +452,9 @@ python proxyreaper.py --config
 - https://github.com/proxifly/free-proxy-list
 - https://github.com/topics/proxy-list (GitHub Topics with proxy-list)
 
+## Chat Support
+- [Telegram Proxy Reaper](https://t.me/proxyreaper)
+
 ## License
 
 MIT License
