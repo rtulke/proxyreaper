@@ -69,7 +69,8 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Installing OS wide (Debian based Distributions)
+## Installing OS wide
+The system wide installation works for the most Debian based Distributions, like Debian, Ubuntu, Mint, RaspberryOS, Kali Linux...
 
 ```bash
 # start as root or try: "sudo su -" or "sudo -i"
