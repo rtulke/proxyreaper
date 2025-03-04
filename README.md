@@ -458,4 +458,4 @@ MIT License
 
 ## Author
 
-[Robert Tulke/rtulke]
+[Robert Tulke](https://tulke.ch)
