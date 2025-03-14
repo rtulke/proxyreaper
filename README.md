@@ -30,6 +30,12 @@ Proxy Reaper is a powerful tool for checking proxy servers for availability, spe
   - colorama
 
 
+### Quick Setup
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/rtulke/AirJack/main/install.sh)"
+```
+
+
 ### Download and Installation
 
 ```bash
