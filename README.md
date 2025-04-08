@@ -1,8 +1,5 @@
 ## Proxy Reaper - Documentation
 
-![Proxy Reaper Logo](https://raw.githubusercontent.com/rtulke/proxyreaper/main/demo/proxyreaper_logo.png)
-
-
 Proxy Reaper is a powerful tool for checking proxy servers for availability, speed and anonymity. It supports various protocols such as HTTP, HTTPS, SOCKS4, and SOCKS5, and offers enhanced features for managing and testing proxies efficiently.
 
 ![Proxy Reaper Banner](https://raw.githubusercontent.com/rtulke/proxyreaper/main/demo/proxyreaper.gif)
@@ -455,6 +452,8 @@ python proxyreaper.py --config
 - https://github.com/topics/proxy-list (GitHub Topics with proxy-list)
 
 ## Chat Support
+![Proxy Reaper Logo](https://raw.githubusercontent.com/rtulke/proxyreaper/main/demo/proxyreaper_logo.png)
+
 [Telegram Group Proxy Reaper](https://t.me/proxyreaper)
 
 <img src="https://raw.githubusercontent.com/rtulke/proxyreaper/main/demo/qrcode.png" width="200">
