@@ -14,10 +14,11 @@ Proxy Reaper is a powerful tool for checking proxy servers for availability, spe
 6. [Proxy Formats and Sources](#proxy-formats-and-sources)
 7. [Anonymity Levels](#anonymity-levels)
 8. [Output Formats](#output-formats)
-9. [Advanced Features](#advanced-features)
-10. [Troubleshooting](#troubleshooting)
-11. [Examples](#examples)
-12. [Reference Proxy-Lists](#Reference-Proxy-Lists)
+9. [Performance Optimization](#performance-optimization)
+10. [Advanced Features](#advanced-features)
+11. [Troubleshooting](#troubleshooting)
+12. [Examples](#examples)
+13. [Reference Proxy-Lists](#Reference-Proxy-Lists)
 
 ## Installation
 
@@ -29,6 +30,7 @@ Proxy Reaper is a powerful tool for checking proxy servers for availability, spe
   - PySocks
   - colorama
   - argparse
+  - aiohttp
 
 ### Download and Installation
 
@@ -45,7 +47,7 @@ chmod +x proxyreaper.py
 ### Installing Dependencies
 
 ```bash
-pip install requests PySocks colorama argparse
+pip install requests PySocks colorama argparse aiohttp
 ```
 
 or use the requirements.txt file:
@@ -87,7 +89,7 @@ sudo cd proxyreaper
 sudo chmod +x proxyreaper.py
 
 # install dependencies
-sudo apt install python3-socks python3-colorama
+sudo apt install python3-socks python3-colorama python3-aiohttp
 
 # copy proxyreaper script to `/usr/local/bin`
 sudo cp proxyreaper.py /usr/local/bin/proxyreaper
@@ -123,6 +125,9 @@ python proxyreaper.py --config
 
 # Use automatic mode to download proxies from URLs defined in the config, in the part [proxysources]
 python proxyreaper.py https://www.google.com -A
+
+# Use asynchronous processing for better performance
+python proxyreaper.py https://www.google.com -p proxies.txt --async
 ```
 
 ## Command Line Arguments
@@ -136,10 +141,12 @@ python proxyreaper.py https://www.google.com -A
 | `-R, --response-time` | Filter for fast proxies (maximum response time in milliseconds) |
 | `-v, --version` | Display version information and exit |
 | `-f, --fast-only` | Save only fast proxies to the output file |
-| `-c, --concurrent` | Number of concurrent checks |
+| `-c, --concurrent` | Number of concurrent checks (default: 100) |
 | `-d, --debug` | Enable detailed debug output |
 | `-A, --automatic-mode` | Download proxy lists from configured URLs |
 | `--config` | Create default config file in ~/.proxyreaper.conf |
+| `--async` | Use asynchronous processing for improved performance |
+| `--batch-size` | Batch size for processing large proxy lists (default: 1000) |
 
 ## Configuration File
 
@@ -166,9 +173,10 @@ The configuration file uses the INI format with the following sections:
 ```ini
 [general]
 timeout = 5
-concurrent = 10
+concurrent = 100
 response_time_filter = 1000
 test_url = https://www.google.com
+chunk_size = 1000
 
 [output]
 format = json
@@ -181,6 +189,9 @@ urls = https://raw.githubusercontent.com/username/proxy-list/main/proxies.txt, h
 [advanced]
 debug = false
 anonymity_check_url = https://httpbin.org/get
+use_async = true
+autosave_batch = 100
+dns_cache_size = 1000
 ```
 
 ### Configuration Sections Explained
@@ -188,9 +199,10 @@ anonymity_check_url = https://httpbin.org/get
 #### [general]
 
 - `timeout`: Connection timeout in seconds (default: 5)
-- `concurrent`: Number of concurrent proxy checks (default: 10)
+- `concurrent`: Number of concurrent proxy checks (default: 100)
 - `response_time_filter`: Maximum response time in milliseconds for "FAST" proxies (default: 1000)
 - `test_url`: URL to use for testing proxies (default: https://www.google.com)
+- `chunk_size`: Size of batches when processing large proxy lists (default: 1000)
 
 #### [output]
 
@@ -206,6 +218,9 @@ anonymity_check_url = https://httpbin.org/get
 
 - `debug`: Enable detailed debug output by default (true/false)
 - `anonymity_check_url`: URL to use for anonymity checks (default: https://httpbin.org/get)
+- `use_async`: Use asynchronous processing by default (true/false)
+- `autosave_batch`: Number of proxies to process before autosaving (default: 100)
+- `dns_cache_size`: Maximum size of the DNS cache (default: 1000)
 
 ## Proxy Formats and Sources
 
@@ -339,11 +354,41 @@ Creates an SQLite database with a `proxies` table containing the proxy informati
 
 In addition to the specified format, Proxy Reaper always creates a plain text file with just the working proxies (one per line), which can be easily used in other applications.
 
+## Performance Optimization
+
+Proxy Reaper 2.0.2 includes several performance optimizations for efficiently handling large proxy lists:
+
+### Asynchronous Processing
+
+Enabling asynchronous processing with the `--async` flag significantly improves throughput:
+
+```bash
+python proxyreaper.py https://www.google.com -p proxies.txt --async
+```
+
+This uses non-blocking I/O operations via the `aiohttp` library to process multiple proxies concurrently without the overhead of threads.
+
+### DNS Caching
+
+The application caches DNS lookups to reduce redundant hostname resolutions, which helps when testing multiple proxies from the same providers.
+
+### Batch Processing
+
+Large proxy lists are processed in batches to optimize memory usage. You can adjust the batch size:
+
+```bash
+python proxyreaper.py https://www.google.com -p large_list.txt --batch-size 2000
+```
+
+### Connection Pooling
+
+HTTP connections are managed through connection pools to reduce connection establishment overhead when checking multiple proxies.
+
 ## Advanced Features
 
 ### Automatic Saving During Execution
 
-Proxy Reaper automatically saves intermediate results every 5 proxies checked. This ensures that even if the program is interrupted, you won't lose your progress. These autosaves are stored in the `results` directory with a timestamp and the `_partial` suffix.
+Proxy Reaper automatically saves intermediate results every 100 proxies checked by default (configurable via `autosave_batch`). This ensures that even if the program is interrupted, you won't lose your progress. These autosaves are stored in the `results` directory with a timestamp and the `_partial` suffix.
 
 ### GeoIP Caching
 
@@ -351,10 +396,10 @@ To improve performance and reduce API calls, Proxy Reaper caches geographical in
 
 ### Concurrent Testing
 
-Proxy Reaper utilizes ThreadPoolExecutor for efficient concurrent proxy testing. You can control the number of concurrent connections with the `-c` or `--concurrent` parameter:
+Proxy Reaper utilizes both ThreadPoolExecutor and asynchronous processing for efficient concurrent proxy testing. You can control the number of concurrent connections with the `-c` or `--concurrent` parameter:
 
 ```bash
-python proxyreaper.py https://www.google.com -p proxies.txt -c 20
+python proxyreaper.py https://www.google.com -p proxies.txt -c 200
 ```
 
 ### Automatic Proxy List Downloads
@@ -395,9 +440,10 @@ This will show additional information such as HTTP headers, connection details, 
 
 #### 3. Performance issues
 
-- Reduce the number of concurrent connections if your system has limited resources
+- Enable asynchronous processing with `--async`
+- Increase the number of concurrent connections with `-c`
 - Use the debug mode to identify bottlenecks
-- Consider using smaller proxy lists for testing
+- Consider using smaller batch sizes for large proxy lists
 
 ## Examples
 
@@ -436,8 +482,11 @@ python proxyreaper.py https://www.google.com -p proxies.txt -d
 # Use automatic mode to download proxies from configured URLs
 python proxyreaper.py https://www.google.com -A
 
-# Run with 20 concurrent connections and detailed output
-python proxyreaper.py https://www.google.com -p proxies.txt -c 20 -d
+# Run with 200 concurrent connections and asynchronous processing
+python proxyreaper.py https://www.google.com -p proxies.txt -c 200 --async
+
+# Process large proxy list with custom batch size
+python proxyreaper.py https://www.google.com -p large_proxy_list.txt --batch-size 2000
 
 # Create a default configuration file
 python proxyreaper.py --config
