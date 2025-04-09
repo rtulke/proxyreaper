@@ -28,6 +28,7 @@ Proxy Reaper is a powerful tool for checking proxy servers for availability, spe
   - requests
   - PySocks
   - colorama
+  - argparse
 
 ### Download and Installation
 
@@ -41,12 +42,10 @@ wget https://raw.githubusercontent.com/rtulke/proxyreaper/main/proxyreaper.py
 chmod +x proxyreaper.py
 ```
 
-
 ### Installing Dependencies
 
-
 ```bash
-pip install requests PySocks colorama
+pip install requests PySocks colorama argparse
 ```
 
 or use the requirements.txt file:
@@ -56,7 +55,7 @@ or use the requirements.txt file:
 cd proxyreaper
 chmod +x proxyreaper.py
 python -m venv venv
-source source venv/bin/activate
+source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -87,11 +86,11 @@ sudo git clone https://github.com/rtulke/proxyreaper.git
 sudo cd proxyreaper
 sudo chmod +x proxyreaper.py
 
-# install dependecies
+# install dependencies
 sudo apt install python3-socks python3-colorama
 
 # copy proxyreaper script to `/usr/local/bin`
-sudo cp proxyreaper.py /usr/local/bin/proxyrepaer
+sudo cp proxyreaper.py /usr/local/bin/proxyreaper
 
 # install man page and updating mandb
 sudo cp proxyreaper.1 /usr/local/share/man/man1/
@@ -109,7 +108,6 @@ $ vim ~/.proxyreaper.conf
 # try using the manual
 $ man proxyreaper
 ```
-
 
 ## Basic Usage
 
@@ -141,7 +139,7 @@ python proxyreaper.py https://www.google.com -A
 | `-c, --concurrent` | Number of concurrent checks |
 | `-d, --debug` | Enable detailed debug output |
 | `-A, --automatic-mode` | Download proxy lists from configured URLs |
-| `-C, --config` | Create default config file in ~/.proxyreaper.conf |
+| `--config` | Create default config file in ~/.proxyreaper.conf |
 
 ## Configuration File
 
@@ -283,8 +281,9 @@ Proxy Reaper categorizes proxies into different anonymity levels and uses color 
 ### How Anonymity is Determined
 
 1. **High Anonymous**: The proxy changes your IP and doesn't add proxy-related headers
-2. **Anonymous (Header leak)**: The proxy changes your IP but adds headers that reveal it's a proxy
-3. **Transparent**: The proxy doesn't hide your original IP address or adds it to request headers
+2. **Anonymous**: Your IP is hidden but the proxy is detected
+3. **Anonymous (Header leak)**: The proxy changes your IP but adds headers that reveal it's a proxy
+4. **Transparent**: The proxy doesn't hide your original IP address or adds it to request headers
 
 ## Output Formats
 
