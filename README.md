@@ -57,6 +57,7 @@ cd proxyreaper
 chmod +x proxyreaper.py
 python -m venv venv
 source source venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
