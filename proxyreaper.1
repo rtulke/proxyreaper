@@ -1,6 +1,6 @@
 .\" Manpage for proxyreaper
 .\" Contact rt@debian.sh to correct errors or typos.
-.TH PROXYREAPER 1 "March 2025" "Proxy Reaper 2.0.1" "User Commands"
+.TH PROXYREAPER 1 "April 2025" "Proxy Reaper 2.0.2" "User Commands"
 .SH NAME
 proxyreaper \- test proxies for availability, speed, and anonymity
 .SH SYNOPSIS
@@ -33,7 +33,7 @@ Display version information and exit
 Save only fast proxies to the output file
 .TP
 .BR \-c ", " \-\-concurrent=\fICOUNT\fR
-Number of concurrent checks (default: 10)
+Number of concurrent checks (default: 100)
 .TP
 .BR \-d ", " \-\-debug
 Enable detailed debug output
@@ -43,6 +43,12 @@ Download proxy lists from configured URLs
 .TP
 .BR \-\-config
 Create default config file in ~/.proxyreaper.conf
+.TP
+.BR \-\-async
+Use asynchronous processing for improved performance (recommended for large proxy lists)
+.TP
+.BR \-\-batch-size=\fICOUNT\fR
+Batch size for processing large proxy lists (default: 1000)
 .SH CONFIGURATION
 Proxy Reaper uses configuration files in the following order of precedence:
 .TP
@@ -68,9 +74,10 @@ The configuration file uses the INI format with the following sections:
 .RS
 [general]
 timeout = 5
-concurrent = 10
+concurrent = 100
 response_time_filter = 1000
 test_url = https://www.google.com
+chunk_size = 1000
 
 [output]
 format = json
@@ -83,6 +90,9 @@ urls = https://raw.githubusercontent.com/username/proxy-list/main/proxies.txt, h
 [advanced]
 debug = false
 anonymity_check_url = https://httpbin.org/get
+use_async = true
+autosave_batch = 100
+dns_cache_size = 1000
 .RE
 .fi
 .SH PROXY FORMATS
@@ -130,6 +140,20 @@ SQLite database with a proxies table
 .TP
 \fBTXT\fR
 Simple text file with one proxy per line
+.SH PERFORMANCE OPTIMIZATION
+Proxy Reaper 2.0.2 includes several performance optimizations:
+.TP
+\fBAsynchronous Processing\fR
+Using the \fB--async\fR flag enables non-blocking asynchronous processing via aiohttp, significantly improving throughput, especially for large proxy lists
+.TP
+\fBDNS Caching\fR
+The application caches DNS lookups to reduce redundant hostname resolutions
+.TP
+\fBBatch Processing\fR
+Large proxy lists are processed in batches to optimize memory usage and throughput
+.TP
+\fBConnection Pooling\fR
+HTTP connections are managed through connection pools to reduce overhead
 .SH EXAMPLES
 .TP
 Test a single proxy:
@@ -169,6 +193,22 @@ Use automatic mode to download proxies from configured URLs:
 .nf
 .RS
 proxyreaper https://www.google.com -A
+.RE
+.fi
+.TP
+Use asynchronous processing for better performance:
+.PP
+.nf
+.RS
+proxyreaper https://www.google.com -p proxies.txt --async
+.RE
+.fi
+.TP
+Process large proxy list with custom batch size:
+.PP
+.nf
+.RS
+proxyreaper https://www.google.com -p large_proxy_list.txt --batch-size 2000
 .RE
 .fi
 .SH FILES
