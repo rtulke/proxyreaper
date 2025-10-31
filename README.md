@@ -7,16 +7,18 @@ Proxy Reaper is a powerful tool for checking proxy servers for availability, spe
 ## Table of Contents
 
 1. [Installation](#installation)
-2. [Installing OS wide (Debian based Distributions)](#Installing-OS-wide)
+2. [Installing OS wide (Debian based Distributions)](#installing-os-wide)
 3. [Basic Usage](#basic-usage)
 4. [Command Line Arguments](#command-line-arguments)
 5. [Configuration File](#configuration-file)
 6. [Proxy Formats and Sources](#proxy-formats-and-sources)
-7. [Anonymity Levels](#anonymity-levels)
-8. [Output Formats](#output-formats)
-9. [Advanced Features](#advanced-features)
-10. [Troubleshooting](#troubleshooting)
-11. [Examples](#examples)
+7. [Speed Categories](#speed-categories)
+8. [Anonymity Levels](#anonymity-levels)
+9. [Filter Options](#filter-options)
+10. [Output Formats](#output-formats)
+11. [Advanced Features](#advanced-features)
+12. [Troubleshooting](#troubleshooting)
+13. [Examples](#examples)
 
 ## Installation
 
@@ -56,14 +58,14 @@ or use the requirements.txt file:
 cd proxyreaper
 chmod +x proxyreaper.py
 python -m venv venv
-source source venv/bin/activate
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### Windows 
+#### Windows
 
 ```bash
-cd proxyreaper 
+cd proxyreaper
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
@@ -75,38 +77,38 @@ The system wide installation works for the most Debian based Distributions, like
 ```bash
 # start as root or try: "sudo su -" or "sudo -i"
 su - root
-sudo cd ~
+cd ~
 
 # create dev directory for development stuff if needed
-sudo mkdir dev
-sudo cd dev
+mkdir dev
+cd dev
 
 # download via git
-sudo git clone https://github.com/rtulke/proxyreaper.git
-sudo cd proxyreaper
-sudo chmod +x proxyreaper.py
+git clone https://github.com/rtulke/proxyreaper.git
+cd proxyreaper
+chmod +x proxyreaper.py
 
-# install dependecies
-sudo apt install python3-socks python3-colorama
+# install dependencies
+apt install python3-socks python3-colorama
 
 # copy proxyreaper script to `/usr/local/bin`
-sudo cp proxyreaper.py /usr/local/bin/proxyrepaer
+cp proxyreaper.py /usr/local/bin/proxyreaper
 
 # install man page and updating mandb
-sudo cp proxyreaper.1 /usr/local/share/man/man1/
-sudo mandb
+cp proxyreaper.1 /usr/local/share/man/man1/
+mandb
 
 # use the proxyreaper script from any directory
-$ proxyreaper -h
+proxyreaper -h
 
 # generate new config file
-$ proxyreaper --config
+proxyreaper --config
 
 # you can also try to edit the new generated configuration file
-$ vim ~/.proxyreaper.conf
+vim ~/.proxyreaper.conf
 
 # try using the manual
-$ man proxyreaper
+man proxyreaper
 ```
 
 
@@ -119,28 +121,46 @@ python proxyreaper.py https://www.google.com -p 1.2.3.4:8080
 # Test multiple proxies from a file
 python proxyreaper.py https://www.google.com -p proxies.txt
 
+# Test multiple files using glob patterns
+python proxyreaper.py https://www.google.com -p "proxies/*.txt"
+
 # Create a default configuration file
 python proxyreaper.py --config
 
-# Use automatic mode to download proxies from URLs defined in the config, in the part [proxysources]
+# Use automatic mode to download proxies from URLs defined in config [proxysources]
 python proxyreaper.py https://www.google.com -A
+
+# Filter and save only ultrafast proxies from Germany
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-status ultrafast --filter-country de
 ```
 
 ## Command Line Arguments
 
-| Argument | Description |
-|----------|-------------|
-| `url` | URL to test the proxies against |
-| `-p, --proxy` | Proxy or file with proxies (comma-separated or .txt file) |
-| `-t, --timeout` | Timeout in seconds (default from config) |
-| `-o, --output` | Save results format (json, csv, txt, or sqlite) |
-| `-R, --response-time` | Filter for fast proxies (maximum response time in milliseconds) |
-| `-v, --version` | Display version information and exit |
-| `-f, --fast-only` | Save only fast proxies to the output file |
-| `-c, --concurrent` | Number of concurrent checks |
-| `-d, --debug` | Enable detailed debug output |
-| `-A, --automatic-mode` | Download proxy lists from configured URLs |
-| `-C, --config` | Create default config file in ~/.proxyreaper.conf |
+### Core Arguments
+
+| Argument | Short | Type | Description |
+|----------|-------|------|-------------|
+| `url` | - | positional | URL to test the proxies against |
+| `--proxy` | `-p` | string | Proxy, file with proxies, or glob pattern (e.g., `*.txt`, `proxies[1-5].txt`) |
+| `--timeout` | `-t` | integer | Timeout in seconds (default from config) |
+| `--output` | `-o` | choice | Save results format: `json`, `csv`, or `sqlite` (default: `csv`) |
+| `--response-time` | `-R` | float | Filter for fast proxies (maximum response time in milliseconds) |
+| `--concurrent` | `-c` | integer | Number of concurrent checks (default: 10) |
+| `--debug` | `-d` | flag | Enable detailed debug output |
+| `--version` | `-v` | flag | Display version information and exit |
+| `--automatic-mode` | `-A` | flag | Download proxy lists from configured URLs |
+| `--config` | `-C` | flag | Create default config file in `~/.proxyreaper.conf` |
+| `--reverse-lookup` | `-l` | flag | Enable reverse DNS lookup for proxy IPs (slower but shows hostnames) |
+
+### Filter Arguments
+
+| Argument | Type | Values | Description |
+|----------|------|--------|-------------|
+| `--filter-status` | multi | `ultrafast`, `fast`, `medium`, `slow` | Filter by speed category (can combine multiple) |
+| `--filter-anonymity` | multi | `highanonymous`, `anonymous`, `headerleak`, `transparent` | Filter by anonymity level (can combine multiple) |
+| `--filter-protocol` | multi | `http`, `https`, `socks4`, `socks5` | Filter by protocol type (can combine multiple) |
+| `--filter-country` | multi | ISO codes | Filter by country code, e.g., `de us uk fr` (can combine multiple) |
+| `--filter-tld` | multi | country codes | Filter by country TLD based on GeoIP, e.g., `de us uk` (can combine multiple) |
 
 ## Configuration File
 
@@ -172,8 +192,7 @@ response_time_filter = 1000
 test_url = https://www.google.com
 
 [output]
-format = json
-fast_only = false
+format = csv
 save_directory = results
 
 [proxysources]
@@ -190,14 +209,13 @@ anonymity_check_url = https://httpbin.org/get
 
 - `timeout`: Connection timeout in seconds (default: 5)
 - `concurrent`: Number of concurrent proxy checks (default: 10)
-- `response_time_filter`: Maximum response time in milliseconds for "FAST" proxies (default: 1000)
+- `response_time_filter`: Maximum response time in milliseconds for filtering (default: 1000)
 - `test_url`: URL to use for testing proxies (default: https://www.google.com)
 
 #### [output]
 
-- `format`: Default output format (json, csv, or sqlite)
-- `fast_only`: Whether to only save fast proxies by default (true/false)
-- `save_directory`: Directory to save results (default: results)
+- `format`: Default output format - `json`, `csv`, or `sqlite` (default: `csv`)
+- `save_directory`: Directory to save results (default: `results`)
 
 #### [proxysources]
 
@@ -226,25 +244,52 @@ Supported protocols:
 
 ### Proxy Input Methods
 
-1. **Single Proxy**: Directly specify a proxy on the command line
-   ```bash
-   python proxyreaper.py https://www.google.com -p 127.0.0.1:8080
-   ```
+#### 1. Single Proxy
+Directly specify a proxy on the command line:
+```bash
+python proxyreaper.py https://www.google.com -p 127.0.0.1:8080
+```
 
-2. **Multiple Proxies**: Use comma-separated list
-   ```bash
-   python proxyreaper.py https://www.google.com -p "127.0.0.1:8080,192.168.1.1:3128"
-   ```
+#### 2. Multiple Proxies (Comma-separated)
+Use comma-separated list:
+```bash
+python proxyreaper.py https://www.google.com -p "127.0.0.1:8080,192.168.1.1:3128"
+```
 
-3. **Text File**: Provide a file with one proxy per line
-   ```bash
-   python proxyreaper.py https://www.google.com -p proxies.txt
-   ```
+#### 3. Single Text File
+Provide a file with one proxy per line:
+```bash
+python proxyreaper.py https://www.google.com -p proxies.txt
+```
 
-4. **Automatic Download**: Use the automatic mode to download proxies from URLs specified in the configuration
-   ```bash
-   python proxyreaper.py https://www.google.com -A
-   ```
+#### 4. Multiple Files (Glob Patterns)
+Use glob patterns to match multiple files:
+
+```bash
+# All .txt files in a directory
+python proxyreaper.py https://www.google.com -p "proxies/*.txt"
+
+# Files matching a specific pattern
+python proxyreaper.py https://www.google.com -p "proxylist*.txt"
+
+# Files with numbered ranges
+python proxyreaper.py https://www.google.com -p "proxylist[1-5].txt"
+
+# Complex patterns
+python proxyreaper.py https://www.google.com -p "../sources/proxy_*.txt"
+```
+
+Supported glob patterns:
+- `*` - Matches any characters
+- `?` - Matches single character
+- `[1-5]` - Matches range of characters
+- `[abc]` - Matches specific characters
+
+#### 5. Automatic Download
+Use automatic mode to download proxies from URLs specified in the configuration:
+```bash
+python proxyreaper.py https://www.google.com -A
+```
 
 ### Example Proxy List File
 
@@ -268,26 +313,205 @@ socks5://192.168.1.5:1080
 
 Lines starting with `#` are treated as comments and ignored.
 
+## Speed Categories
+
+Proxy Reaper categorizes proxies into four speed categories based on their response time:
+
+| Category | Response Time | Description | Use Case |
+|----------|---------------|-------------|----------|
+| **Ultrafast** | < 100ms | Extremely fast proxies | Real-time applications, streaming, gaming |
+| **Fast** | 100-500ms | Fast proxies | Web browsing, API calls, general use |
+| **Medium** | 500-1000ms | Medium speed proxies | Background tasks, batch processing |
+| **Slow** | > 1000ms | Slow proxies | Non-time-critical tasks |
+
+### Speed Category Output
+
+The speed category is included in all output formats:
+
+**CSV Output:**
+```csv
+proxy,hostname,status,speed_category,response_time,country,city,anonymity,protocol,check_time
+http://1.2.3.4:8080,1.2.3.4,working,ultrafast,87.5,Germany,Berlin,High Anonymous,http,2025-10-31 14:30:45
+```
+
+**Console Output:**
+```
+[1/100] ULTRAFAST - http://1.2.3.4:8080 (Germany, Berlin, High Anonymous) - 87 ms
+[2/100] FAST - http://5.6.7.8:3128 (United States, New York, Anonymous) - 245 ms
+[3/100] SLOW - http://9.10.11.12:8080 (France, Paris, Transparent) - 1523 ms
+```
+
 ## Anonymity Levels
 
 Proxy Reaper categorizes proxies into different anonymity levels and uses color coding for easy identification:
 
-| Level | Color | Description |
-|-------|-------|-------------|
-| **High Anonymous** | Green (Bright) | Your IP address and proxy status are completely hidden |
-| **Anonymous** | Blue (Bright) | Your IP address is hidden, but the server knows you're using a proxy |
-| **Anonymous (Header leak)** | Yellow | Your IP is hidden, but proxy headers are visible |
-| **Transparent** | Red | Your original IP address is visible to the server |
+| Level | Color | Description | Headers Visible |
+|-------|-------|-------------|-----------------|
+| **High Anonymous** | Green (Bright) | Your IP address and proxy status are completely hidden | No proxy headers |
+| **Anonymous** | Blue (Bright) | Your IP address is hidden, but the server knows you're using a proxy | Minimal proxy headers |
+| **Anonymous (Header leak)** | Yellow | Your IP is hidden, but proxy headers are visible | Proxy headers visible |
+| **Transparent** | Red | Your original IP address is visible to the server | All headers visible |
 
 ### How Anonymity is Determined
 
 1. **High Anonymous**: The proxy changes your IP and doesn't add proxy-related headers
-2. **Anonymous (Header leak)**: The proxy changes your IP but adds headers that reveal it's a proxy
-3. **Transparent**: The proxy doesn't hide your original IP address or adds it to request headers
+2. **Anonymous**: The proxy changes your IP but adds minimal headers revealing it's a proxy
+3. **Anonymous (Header leak)**: The proxy changes your IP but adds headers that reveal proxy details
+4. **Transparent**: The proxy doesn't hide your original IP address or forwards it in headers
+
+## Filter Options
+
+Proxy Reaper provides powerful filtering capabilities to save only the proxies that meet your specific requirements. Filters are applied when saving results and create descriptive filenames.
+
+### Filter Behavior
+
+- **Multiple values within same filter**: OR logic (any match passes)
+- **Multiple different filters**: AND logic (all must match)
+- **Working proxies only**: Failed proxies are automatically excluded
+
+### Speed Status Filter
+
+Filter proxies by their speed category:
+
+```bash
+# Save only ultrafast proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-status ultrafast
+
+# Save ultrafast OR fast proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-status ultrafast fast
+
+# Save medium OR slow proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-status medium slow
+```
+
+**Available values:** `ultrafast`, `fast`, `medium`, `slow`
+
+### Anonymity Filter
+
+Filter proxies by their anonymity level:
+
+```bash
+# Save only high anonymous proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-anonymity highanonymous
+
+# Save high anonymous OR anonymous proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-anonymity highanonymous anonymous
+
+# Exclude transparent proxies (save all except transparent)
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-anonymity highanonymous anonymous headerleak
+```
+
+**Available values:** `highanonymous`, `anonymous`, `headerleak`, `transparent`
+
+### Protocol Filter
+
+Filter proxies by their protocol:
+
+```bash
+# Save only HTTP proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-protocol http
+
+# Save HTTP OR HTTPS proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-protocol http https
+
+# Save only SOCKS proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-protocol socks4 socks5
+```
+
+**Available values:** `http`, `https`, `socks4`, `socks5`
+
+### Country Filter
+
+Filter proxies by their country location (based on GeoIP):
+
+```bash
+# Save only German proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-country de
+
+# Save German OR US proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-country de us
+
+# Save European proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-country de fr uk nl it es
+```
+
+**Supported country codes:** ISO 3166-1 alpha-2 codes (e.g., `de`, `us`, `uk`, `fr`, `jp`, `cn`, etc.)
+
+Full list of ~150 supported countries available in the code.
+
+### TLD Filter
+
+Filter proxies by country TLD based on GeoIP location:
+
+```bash
+# Save proxies from .de domains (German IPs)
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-tld de
+
+# Save proxies from .de OR .us domains
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-tld de us
+```
+
+**Note:** TLD filtering is based on GeoIP country mapping, not actual domain names.
+
+### Combining Filters
+
+Combine multiple filters for precise proxy selection:
+
+```bash
+# Ultrafast, high anonymous proxies from Germany
+python proxyreaper.py https://www.google.com -p proxies.txt \
+  --filter-status ultrafast \
+  --filter-anonymity highanonymous \
+  --filter-country de
+
+# Fast HTTP/HTTPS proxies from US or UK
+python proxyreaper.py https://www.google.com -p proxies.txt \
+  --filter-status ultrafast fast \
+  --filter-protocol http https \
+  --filter-country us uk
+
+# High anonymous SOCKS5 proxies from Europe (any speed)
+python proxyreaper.py https://www.google.com -p proxies.txt \
+  --filter-anonymity highanonymous \
+  --filter-protocol socks5 \
+  --filter-country de fr uk nl it es
+```
+
+### Filter Output Filenames
+
+When filters are applied, the output filename includes filter information:
+
+```bash
+# Without filters:
+results/proxy_results_20251031_143045.csv
+
+# With filters:
+results/filtered_proxies_ultrafast_highanonymous_http_https_de_us_20251031_143045.csv
+```
+
+This makes it easy to identify which filters were used for each result file.
 
 ## Output Formats
 
-Proxy Reaper supports multiple output formats:
+Proxy Reaper supports multiple output formats. The default format is **CSV** if no `-o` option is specified.
+
+### CSV Output (Default)
+
+```bash
+# Uses CSV by default
+python proxyreaper.py https://www.google.com -p proxies.txt
+
+# Explicitly specify CSV
+python proxyreaper.py https://www.google.com -p proxies.txt -o csv
+```
+
+Creates a CSV file with detailed proxy information:
+
+```csv
+proxy,hostname,status,speed_category,response_time,country,city,anonymity,protocol,check_time
+http://1.2.3.4:8080,proxy.example.com,working,ultrafast,87.5,Germany,Berlin,High Anonymous,http,2025-10-31 14:30:45
+http://5.6.7.8:3128,5.6.7.8,working,fast,245.3,United States,New York,Anonymous,http,2025-10-31 14:30:46
+```
 
 ### JSON Output
 
@@ -300,31 +524,18 @@ Creates a JSON file with detailed proxy information:
 ```json
 [
   {
-    "proxy": "http://192.168.1.1:8080",
-    "status": "FAST",
-    "response_time": 345.67,
-    "country": "United States",
-    "city": "New York",
+    "proxy": "http://1.2.3.4:8080",
+    "hostname": "proxy.example.com",
+    "status": "working",
+    "speed_category": "ultrafast",
+    "response_time": 87.5,
+    "country": "Germany",
+    "city": "Berlin",
     "anonymity": "High Anonymous",
     "protocol": "http",
-    "check_time": "2023-10-01 15:30:45"
-  },
-  ...
+    "check_time": "2025-10-31 14:30:45"
+  }
 ]
-```
-
-### CSV Output
-
-```bash
-python proxyreaper.py https://www.google.com -p proxies.txt -o csv
-```
-
-Creates a CSV file with the same information in tabular format:
-
-```
-proxy,status,response_time,country,city,anonymity,protocol
-http://192.168.1.1:8080,FAST,345.67,United States,New York,High Anonymous,http
-...
 ```
 
 ### SQLite Output
@@ -335,27 +546,114 @@ python proxyreaper.py https://www.google.com -p proxies.txt -o sqlite
 
 Creates an SQLite database with a `proxies` table containing the proxy information. This is useful for more complex queries and data analysis.
 
+**Database schema:**
+```sql
+CREATE TABLE proxies (
+    proxy TEXT,
+    hostname TEXT,
+    status TEXT,
+    speed_category TEXT,
+    response_time REAL,
+    country TEXT,
+    city TEXT,
+    anonymity TEXT,
+    protocol TEXT,
+    check_time TEXT
+);
+```
+
 ### Text Output
 
-In addition to the specified format, Proxy Reaper always creates a plain text file with just the working proxies (one per line), which can be easily used in other applications.
+In addition to the specified format, Proxy Reaper **always creates a plain text file** with just the working proxies (one per line), which can be easily used in other applications:
+
+```
+http://1.2.3.4:8080
+http://5.6.7.8:3128
+socks5://9.10.11.12:1080
+```
 
 ## Advanced Features
 
+### Reverse DNS Lookup
+
+Enable reverse DNS lookup to resolve proxy IPs to hostnames:
+
+```bash
+python proxyreaper.py https://www.google.com -p proxies.txt -l
+```
+
+**Output without `-l`:**
+```
+[1/100] ULTRAFAST - http://1.2.3.4:8080 (Germany, Berlin, High Anonymous) - 87 ms
+```
+
+**Output with `-l`:**
+```
+[1/100] ULTRAFAST - proxy.example.com (Germany, Berlin, High Anonymous) - 87 ms
+```
+
+The hostname is also saved in the output files:
+- CSV: `hostname` column
+- JSON: `hostname` field
+- Text: unchanged (still shows proxy URL)
+
+**Note:** Reverse DNS lookup is slower as it performs additional DNS queries. Use only when needed.
+
+### Glob Pattern Support
+
+Load proxies from multiple files using glob patterns:
+
+```bash
+# All .txt files in directory
+python proxyreaper.py https://www.google.com -p "proxies/*.txt"
+
+# Specific pattern
+python proxyreaper.py https://www.google.com -p "proxylist_*.txt"
+
+# Numbered files
+python proxyreaper.py https://www.google.com -p "proxylist[1-9].txt"
+
+# Range
+python proxyreaper.py https://www.google.com -p "proxy_[a-z].txt"
+```
+
+**Console output:**
+```
+Found 15 file(s) matching pattern: proxies/*.txt
+Loaded 450 proxies from proxy_http.txt
+Loaded 230 proxies from proxy_socks.txt
+...
+Total: Loaded 1250 proxies from 15 file(s)
+```
+
 ### Automatic Saving During Execution
 
-Proxy Reaper automatically saves intermediate results every 5 proxies checked. This ensures that even if the program is interrupted, you won't lose your progress. These autosaves are stored in the `results` directory with a timestamp and the `_partial` suffix.
+Proxy Reaper automatically saves intermediate results every 5 proxies checked. This ensures that even if the program is interrupted, you won't lose your progress.
+
+Autosave files are stored in the `results` directory:
+- `proxy_results_TIMESTAMP_final.json` - Complete autosave
 
 ### GeoIP Caching
 
-To improve performance and reduce API calls, Proxy Reaper caches geographical information for IP addresses. This significantly speeds up testing when multiple proxies are hosted on the same server.
+To improve performance and reduce API calls, Proxy Reaper caches geographical information for IP addresses. This significantly speeds up testing when multiple proxies are hosted on the same server or subnet.
 
 ### Concurrent Testing
 
 Proxy Reaper utilizes ThreadPoolExecutor for efficient concurrent proxy testing. You can control the number of concurrent connections with the `-c` or `--concurrent` parameter:
 
 ```bash
+# Test with 20 concurrent workers
 python proxyreaper.py https://www.google.com -p proxies.txt -c 20
+
+# Test with 50 concurrent workers (for large lists)
+python proxyreaper.py https://www.google.com -p proxies.txt -c 50
 ```
+
+**Performance recommendations:**
+- Default: 10 workers (balanced)
+- Small lists (<100): 5-10 workers
+- Medium lists (100-1000): 10-20 workers
+- Large lists (>1000): 20-50 workers
 
 ### Automatic Proxy List Downloads
 
@@ -367,6 +665,14 @@ python proxyreaper.py https://www.google.com -A
 
 This feature is useful for maintaining an up-to-date proxy list without manual intervention.
 
+**Configuration example:**
+```ini
+[proxysources]
+urls = https://raw.githubusercontent.com/user/proxy-list/main/http.txt,
+       https://www.proxy-list.download/api/v1/get?type=http,
+       https://api.proxyscrape.com/v2/?request=get&protocol=http
+```
+
 ### Detailed Debug Output
 
 Enable detailed debugging information with the `-d` or `--debug` flag:
@@ -375,7 +681,13 @@ Enable detailed debugging information with the `-d` or `--debug` flag:
 python proxyreaper.py https://www.google.com -p proxies.txt -d
 ```
 
-This will show additional information such as HTTP headers, connection details, and more.
+Debug mode shows:
+- HTTP headers and responses
+- Connection details
+- Error messages with stack traces
+- GeoIP API calls
+- File operations
+- Proxy validation details
 
 ## Troubleshooting
 
@@ -383,21 +695,84 @@ This will show additional information such as HTTP headers, connection details, 
 
 #### 1. No valid proxies found
 
+**Symptoms:**
+```
+No valid proxies found after validation.
+Exiting.
+```
+
+**Solutions:**
 - Check that your proxy list file exists and has the correct format
 - Ensure that each proxy is on a separate line
+- Verify proxy format: `protocol://host:port` or `host:port`
+- If using glob patterns, check that the pattern matches existing files
 - If using automatic mode, check that the URLs in the configuration file are accessible
 
-#### 2. Connection errors
+#### 2. No files matched pattern
 
+**Symptoms:**
+```
+No files matched pattern: proxies/*.txt
+```
+
+**Solutions:**
+- Verify the glob pattern is correct
+- Check that files exist in the specified directory
+- Use absolute paths or verify current working directory
+- Ensure file extensions match (e.g., `.txt` not `.TXT`)
+
+#### 3. Connection errors
+
+**Symptoms:**
+```
+[1/100] FAILED - http://1.2.3.4:8080
+```
+
+**Solutions:**
 - Increase the timeout value with `-t` or in the configuration file
 - Check your internet connection
 - Verify that the test URL is accessible from your location
+- Try a different test URL
+- Some proxies may be genuinely offline
 
-#### 3. Performance issues
+#### 4. Performance issues
 
-- Reduce the number of concurrent connections if your system has limited resources
-- Use the debug mode to identify bottlenecks
-- Consider using smaller proxy lists for testing
+**Symptoms:**
+- Slow proxy checking
+- High CPU or memory usage
+- System slowdown
+
+**Solutions:**
+- Reduce the number of concurrent connections: `-c 5`
+- Use smaller proxy lists for testing
+- Increase timeout for slow networks
+- Disable reverse DNS lookup (remove `-l`)
+- Use debug mode to identify bottlenecks: `-d`
+
+#### 5. ImportError or ModuleNotFoundError
+
+**Symptoms:**
+```
+ModuleNotFoundError: No module named 'requests'
+```
+
+**Solutions:**
+- Install required dependencies: `pip install requests PySocks colorama`
+- Activate virtual environment if using one: `source venv/bin/activate`
+- Verify Python version: `python --version` (3.6+ required)
+
+#### 6. Permission denied errors
+
+**Symptoms:**
+```
+PermissionError: [Errno 13] Permission denied: 'results/proxy_results.csv'
+```
+
+**Solutions:**
+- Check write permissions for the output directory
+- Create the output directory manually: `mkdir results`
+- Change output directory in config or use `-o` flag
+- Run with appropriate permissions
 
 ## Examples
 
@@ -412,19 +787,68 @@ python proxyreaper.py https://www.google.com -p proxies.txt -t 10
 
 # Test proxies against a specific website
 python proxyreaper.py https://www.example.com -p proxies.txt
+
+# Test all proxy files in a directory
+python proxyreaper.py https://www.google.com -p "proxy_sources/*.txt"
 ```
 
-### Filtering and Output
+### Speed and Performance
 
 ```bash
 # Only consider proxies with response time under 500ms as "FAST"
 python proxyreaper.py https://www.google.com -p proxies.txt -R 500
 
-# Save only fast proxies to a CSV file
-python proxyreaper.py https://www.google.com -p proxies.txt -o csv -f
+# Test with 30 concurrent workers for faster processing
+python proxyreaper.py https://www.google.com -p proxies.txt -c 30
 
-# Save results to an SQLite database
+# Combine for maximum performance
+python proxyreaper.py https://www.google.com -p proxies.txt -c 50 -t 3
+```
+
+### Filtering Examples
+
+```bash
+# Save only ultrafast proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-status ultrafast
+
+# Save only high anonymous proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-anonymity highanonymous
+
+# Save only HTTP and HTTPS proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-protocol http https
+
+# Save only German proxies
+python proxyreaper.py https://www.google.com -p proxies.txt --filter-country de
+
+# Save ultrafast, high anonymous proxies from Germany or US
+python proxyreaper.py https://www.google.com -p proxies.txt \
+  --filter-status ultrafast \
+  --filter-anonymity highanonymous \
+  --filter-country de us
+
+# Save fast HTTP proxies from Europe
+python proxyreaper.py https://www.google.com -p proxies.txt \
+  --filter-status ultrafast fast \
+  --filter-protocol http \
+  --filter-country de fr uk nl it es pl
+```
+
+### Output Format Examples
+
+```bash
+# Save as CSV (default)
+python proxyreaper.py https://www.google.com -p proxies.txt
+
+# Save as JSON
+python proxyreaper.py https://www.google.com -p proxies.txt -o json
+
+# Save as SQLite database
 python proxyreaper.py https://www.google.com -p proxies.txt -o sqlite
+
+# Filter and save as JSON
+python proxyreaper.py https://www.google.com -p proxies.txt \
+  --filter-status ultrafast \
+  -o json
 ```
 
 ### Advanced Usage
@@ -436,11 +860,59 @@ python proxyreaper.py https://www.google.com -p proxies.txt -d
 # Use automatic mode to download proxies from configured URLs
 python proxyreaper.py https://www.google.com -A
 
-# Run with 20 concurrent connections and detailed output
-python proxyreaper.py https://www.google.com -p proxies.txt -c 20 -d
+# Use automatic mode with specific URLs
+python proxyreaper.py https://www.google.com -A -p "https://example.com/proxies.txt,https://example2.com/list.txt"
 
-# Create a default configuration file
-python proxyreaper.py --config
+# Run with reverse DNS lookup
+python proxyreaper.py https://www.google.com -p proxies.txt -l
+
+# Comprehensive test with all features
+python proxyreaper.py https://www.google.com \
+  -p "proxy_sources/*.txt" \
+  -c 30 \
+  -t 10 \
+  -l \
+  --filter-status ultrafast fast \
+  --filter-anonymity highanonymous \
+  --filter-country de us uk \
+  -o json \
+  -d
+```
+
+### Practical Scenarios
+
+```bash
+# Find the fastest German proxies for web scraping
+python proxyreaper.py https://www.google.com -p proxies.txt \
+  --filter-status ultrafast fast \
+  --filter-country de \
+  -o csv
+
+# Get high anonymous SOCKS5 proxies for secure browsing
+python proxyreaper.py https://www.google.com -p proxies.txt \
+  --filter-anonymity highanonymous \
+  --filter-protocol socks5 \
+  -o json
+
+# Build a database of all working European proxies
+python proxyreaper.py https://www.google.com -p "europe/*.txt" \
+  --filter-country de fr uk nl it es pl cz at ch \
+  -o sqlite
+
+# Quick test of premium proxy list with hostname resolution
+python proxyreaper.py https://www.google.com \
+  -p premium_proxies.txt \
+  -l \
+  -c 20 \
+  --filter-status ultrafast \
+  --filter-anonymity highanonymous
+
+# Daily automated proxy harvesting
+python proxyreaper.py https://www.google.com -A \
+  -c 50 \
+  --filter-status ultrafast fast medium \
+  --filter-anonymity highanonymous anonymous \
+  -o sqlite
 ```
 
 ## License

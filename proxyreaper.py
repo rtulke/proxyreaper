@@ -35,6 +35,7 @@ import sqlite3
 import configparser
 import hashlib
 import concurrent.futures
+import glob
 from pathlib import Path
 from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor
@@ -56,6 +57,105 @@ geoip_cache = {}
 global_results = []
 results_counter = 0
 AUTOSAVE_FREQUENCY = 5  # Save after every 5 proxies
+
+# Status constants for proxy checks
+STATUS_FAILED = "FAILED"
+
+# Response time categories (in milliseconds)
+SPEED_ULTRAFAST = "ultrafast"  # < 100ms
+SPEED_FAST = "fast"            # 100-500ms
+SPEED_MEDIUM = "medium"        # 500-1000ms
+SPEED_SLOW = "slow"            # > 1000ms
+
+SPEED_THRESHOLDS = {
+    SPEED_ULTRAFAST: (0, 100),
+    SPEED_FAST: (100, 500),
+    SPEED_MEDIUM: (500, 1000),
+    SPEED_SLOW: (1000, float('inf'))
+}
+
+# Anonymity level constants
+ANONYMITY_HIGH = "High Anonymous"
+ANONYMITY_ANONYMOUS = "Anonymous"
+ANONYMITY_HEADER_LEAK = "Anonymous (Header leak)"
+ANONYMITY_TRANSPARENT = "Transparent"
+ANONYMITY_FAILED = "Failed"
+
+# Protocol constants
+PROTOCOL_HTTP = "http"
+PROTOCOL_HTTPS = "https"
+PROTOCOL_SOCKS4 = "socks4"
+PROTOCOL_SOCKS5 = "socks5"
+
+# Vollständige ISO 3166-1 alpha-2 Country Codes
+COUNTRY_CODES = {
+    # Europa
+    'de': 'Germany', 'fr': 'France', 'uk': 'United Kingdom', 'gb': 'United Kingdom',
+    'it': 'Italy', 'es': 'Spain', 'pt': 'Portugal', 'nl': 'Netherlands',
+    'be': 'Belgium', 'lu': 'Luxembourg', 'ch': 'Switzerland', 'at': 'Austria',
+    'pl': 'Poland', 'cz': 'Czech Republic', 'sk': 'Slovakia', 'hu': 'Hungary',
+    'ro': 'Romania', 'bg': 'Bulgaria', 'gr': 'Greece', 'cy': 'Cyprus',
+    'se': 'Sweden', 'no': 'Norway', 'fi': 'Finland', 'dk': 'Denmark',
+    'is': 'Iceland', 'ie': 'Ireland', 'ee': 'Estonia', 'lv': 'Latvia',
+    'lt': 'Lithuania', 'si': 'Slovenia', 'hr': 'Croatia', 'ba': 'Bosnia and Herzegovina',
+    'rs': 'Serbia', 'me': 'Montenegro', 'mk': 'North Macedonia', 'al': 'Albania',
+    'ua': 'Ukraine', 'by': 'Belarus', 'md': 'Moldova', 'ru': 'Russia', 'mt': 'Malta',
+    # Nordamerika
+    'us': 'United States', 'ca': 'Canada', 'mx': 'Mexico',
+    # Mittelamerika & Karibik
+    'gt': 'Guatemala', 'bz': 'Belize', 'sv': 'El Salvador', 'hn': 'Honduras',
+    'ni': 'Nicaragua', 'cr': 'Costa Rica', 'pa': 'Panama', 'cu': 'Cuba',
+    'jm': 'Jamaica', 'ht': 'Haiti', 'do': 'Dominican Republic', 'pr': 'Puerto Rico',
+    'tt': 'Trinidad and Tobago', 'bs': 'Bahamas', 'bb': 'Barbados',
+    # Südamerika
+    'br': 'Brazil', 'ar': 'Argentina', 'cl': 'Chile', 'co': 'Colombia',
+    've': 'Venezuela', 'pe': 'Peru', 'ec': 'Ecuador', 'bo': 'Bolivia',
+    'py': 'Paraguay', 'uy': 'Uruguay', 'gy': 'Guyana', 'sr': 'Suriname',
+    # Asien
+    'cn': 'China', 'jp': 'Japan', 'kr': 'South Korea', 'kp': 'North Korea',
+    'tw': 'Taiwan', 'hk': 'Hong Kong', 'mo': 'Macau', 'in': 'India',
+    'pk': 'Pakistan', 'bd': 'Bangladesh', 'lk': 'Sri Lanka', 'np': 'Nepal',
+    'bt': 'Bhutan', 'mv': 'Maldives', 'th': 'Thailand', 'vn': 'Vietnam',
+    'mm': 'Myanmar', 'la': 'Laos', 'kh': 'Cambodia', 'my': 'Malaysia',
+    'sg': 'Singapore', 'id': 'Indonesia', 'ph': 'Philippines', 'bn': 'Brunei',
+    'tl': 'East Timor', 'mn': 'Mongolia', 'kz': 'Kazakhstan', 'uz': 'Uzbekistan',
+    'tm': 'Turkmenistan', 'kg': 'Kyrgyzstan', 'tj': 'Tajikistan', 'af': 'Afghanistan',
+    'ir': 'Iran', 'iq': 'Iraq', 'sy': 'Syria', 'jo': 'Jordan',
+    'lb': 'Lebanon', 'il': 'Israel', 'ps': 'Palestine', 'sa': 'Saudi Arabia',
+    'ye': 'Yemen', 'om': 'Oman', 'ae': 'United Arab Emirates', 'qa': 'Qatar',
+    'bh': 'Bahrain', 'kw': 'Kuwait', 'tr': 'Turkey', 'am': 'Armenia',
+    'az': 'Azerbaijan', 'ge': 'Georgia',
+    # Afrika
+    'eg': 'Egypt', 'ly': 'Libya', 'tn': 'Tunisia', 'dz': 'Algeria',
+    'ma': 'Morocco', 'mr': 'Mauritania', 'ml': 'Mali', 'ne': 'Niger',
+    'td': 'Chad', 'sd': 'Sudan', 'ss': 'South Sudan', 'et': 'Ethiopia',
+    'er': 'Eritrea', 'dj': 'Djibouti', 'so': 'Somalia', 'ke': 'Kenya',
+    'ug': 'Uganda', 'tz': 'Tanzania', 'rw': 'Rwanda', 'bi': 'Burundi',
+    'mz': 'Mozambique', 'mw': 'Malawi', 'zm': 'Zambia', 'zw': 'Zimbabwe',
+    'bw': 'Botswana', 'na': 'Namibia', 'za': 'South Africa', 'ls': 'Lesotho',
+    'sz': 'Eswatini', 'ao': 'Angola', 'cd': 'Democratic Republic of the Congo',
+    'cg': 'Republic of the Congo', 'cf': 'Central African Republic', 'cm': 'Cameroon',
+    'gq': 'Equatorial Guinea', 'ga': 'Gabon', 'st': 'São Tomé and Príncipe',
+    'gw': 'Guinea-Bissau', 'gn': 'Guinea', 'sl': 'Sierra Leone', 'lr': 'Liberia',
+    'ci': 'Ivory Coast', 'gh': 'Ghana', 'tg': 'Togo', 'bj': 'Benin',
+    'bf': 'Burkina Faso', 'ng': 'Nigeria', 'sn': 'Senegal', 'gm': 'Gambia',
+    'mg': 'Madagascar', 'mu': 'Mauritius', 'sc': 'Seychelles', 'km': 'Comoros',
+    # Ozeanien
+    'au': 'Australia', 'nz': 'New Zealand', 'pg': 'Papua New Guinea', 'fj': 'Fiji',
+    'sb': 'Solomon Islands', 'vu': 'Vanuatu', 'nc': 'New Caledonia', 'ws': 'Samoa',
+    'ki': 'Kiribati', 'to': 'Tonga', 'fm': 'Micronesia', 'mh': 'Marshall Islands',
+    'pw': 'Palau', 'nr': 'Nauru', 'tv': 'Tuvalu',
+    # Spezial
+    'unknown': 'Unknown', 'private': 'Private Network', 'localhost': 'Localhost'
+}
+
+# Reverse Mapping: Country Name → Country Code (für GeoIP → TLD)
+COUNTRY_TO_CODE = {v.lower(): k for k, v in COUNTRY_CODES.items()}
+
+# Output file constants
+DEFAULT_OUTPUT_DIR = "results"
+DEFAULT_OUTPUT_FORMAT = "csv"
+CSV_FIELDNAMES = ["proxy", "hostname", "status", "speed_category", "response_time", "country", "city", "anonymity", "protocol", "check_time"]
 
 # Integrated banner ASCII art without version info.
 BANNER_TEXT = r"""
@@ -295,17 +395,17 @@ def get_public_ip():
 def parse_proxies(proxy_input, auto_mode=False):
     """
     Parse proxy input which can be a single proxy, a comma-separated list,
-    a file path, or URLs in automatic mode.
-    
+    a file path, glob patterns, or URLs in automatic mode.
+
     Args:
-        proxy_input (str): Input string containing proxies or a file path
+        proxy_input (str): Input string containing proxies, file path, or glob pattern
         auto_mode (bool): Whether to download proxies from URLs
-    
+
     Returns:
         list: List of parsed proxies
     """
     proxies = []
-    
+
     # Handle automatic mode
     if auto_mode:
         debug_print("Automatic mode enabled, downloading proxy lists...", "info", print_lock)
@@ -317,7 +417,7 @@ def parse_proxies(proxy_input, auto_mode=False):
         else:
             # Use URLs from command line
             urls = [url.strip() for url in proxy_input.split(',') if url.strip()]
-        
+
         for url in urls:
             try:
                 debug_print(f"Downloading proxies from {url}", "info", print_lock)
@@ -325,7 +425,7 @@ def parse_proxies(proxy_input, auto_mode=False):
                 if response.status_code == 200:
                     content = response.text
                     # Extract proxies from content (assumes one proxy per line)
-                    url_proxies = [line.strip() for line in content.splitlines() 
+                    url_proxies = [line.strip() for line in content.splitlines()
                                   if line.strip() and not line.strip().startswith('#')]
                     debug_print(f"Downloaded {len(url_proxies)} proxies from {url}", "success", print_lock)
                     proxies.extend(url_proxies)
@@ -333,11 +433,33 @@ def parse_proxies(proxy_input, auto_mode=False):
                     debug_print(f"Failed to download from {url}: HTTP {response.status_code}", "error", print_lock)
             except Exception as e:
                 debug_print(f"Error downloading from {url}: {str(e)}", "error", print_lock)
-        
+
     # Handle standard file or comma-separated list
     elif ',' in proxy_input:
         proxies = [p.strip() for p in proxy_input.split(',') if p.strip()]
         debug_print(f"Parsed {len(proxies)} proxies from comma-separated input", "debug", print_lock)
+    # Check for glob patterns (*, ?, [])
+    elif any(char in proxy_input for char in ['*', '?', '[', ']']):
+        matched_files = glob.glob(proxy_input)
+        if not matched_files:
+            debug_print(f"No files matched pattern: {proxy_input}", "error", print_lock)
+            sys.exit(1)
+
+        debug_print(f"Found {len(matched_files)} file(s) matching pattern: {proxy_input}", "info", print_lock)
+        for filepath in matched_files:
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    file_proxies = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+                    proxies.extend(file_proxies)
+                    debug_print(f"Loaded {len(file_proxies)} proxies from {filepath}", "debug", print_lock)
+            except Exception as e:
+                if global_args and global_args.debug:
+                    debug_print(f"Error reading file {filepath}: {str(e)}", "error", print_lock)
+                else:
+                    debug_print(f"Error reading file {filepath}", "error", print_lock)
+
+        if proxies:
+            debug_print(f"Total: Loaded {len(proxies)} proxies from {len(matched_files)} file(s)", "success", print_lock)
     elif proxy_input.endswith('.txt'):
         try:
             with open(proxy_input, 'r', encoding='utf-8') as f:
@@ -634,50 +756,276 @@ def create_socket_connection(proxy_type, proxy_host, proxy_port, target_host, ta
         debug_print(f"SOCKS connection failed: {str(e)}", "debug", print_lock)
         return False
 
+def reverse_dns_lookup(ip_address):
+    """
+    Führt einen Reverse-DNS-Lookup für eine IP-Adresse durch.
+
+    Args:
+        ip_address (str): Die IP-Adresse für den Reverse-Lookup
+
+    Returns:
+        str: Hostname falls erfolgreich, sonst die ursprüngliche IP-Adresse
+    """
+    try:
+        hostname, _, _ = socket.gethostbyaddr(ip_address)
+        return hostname
+    except (socket.herror, socket.gaierror, socket.timeout):
+        # Falls Reverse-Lookup fehlschlägt, gib die IP zurück
+        return ip_address
+    except Exception:
+        return ip_address
+
+def prepare_output_directory(config):
+    """
+    Erstellt Output-Verzeichnis und gibt den Pfad zurück.
+
+    Args:
+        config (configparser.ConfigParser): Configuration object
+
+    Returns:
+        str: Pfad zum Output-Verzeichnis
+    """
+    save_dir = config.get('output', 'save_directory', fallback=DEFAULT_OUTPUT_DIR)
+    os.makedirs(save_dir, exist_ok=True)
+    return save_dir
+
+def generate_timestamp():
+    """
+    Generiert einen Timestamp-String für Dateinamen.
+
+    Returns:
+        str: Timestamp im Format YYYYMMDD_HHMMSS
+    """
+    return time.strftime("%Y%m%d_%H%M%S")
+
+def build_filename(save_dir, prefix, extension, timestamp=None, suffix=None):
+    """
+    Erstellt einen vollständigen Dateipfad mit optionalem Timestamp und Suffix.
+
+    Args:
+        save_dir (str): Zielverzeichnis
+        prefix (str): Dateiname-Prefix (z.B. "proxy_results", "fast_proxies")
+        extension (str): Dateiendung ohne Punkt (z.B. "json", "csv", "txt")
+        timestamp (str, optional): Timestamp-String. Wird automatisch generiert wenn None
+        suffix (str, optional): Zusätzliches Suffix vor der Extension (z.B. "partial", "final")
+
+    Returns:
+        str: Vollständiger Dateipfad
+    """
+    if timestamp is None:
+        timestamp = generate_timestamp()
+
+    if suffix:
+        filename = f"{prefix}_{timestamp}_{suffix}.{extension}"
+    else:
+        filename = f"{prefix}_{timestamp}.{extension}"
+
+    return os.path.join(save_dir, filename)
+
 def autosave_results(results, config, in_progress=True):
     """
     Automatically save results at regular intervals.
-    
+
     Args:
         results (list): List of proxy check results
         config (configparser.ConfigParser): Configuration
         in_progress (bool): Whether this is an in-progress save or final
-    
+
     Returns:
         None
     """
     global results_counter
-    
+
     if not results:
         return
-        
-    # Create output directory
-    save_dir = config.get('output', 'save_directory', fallback='results')
-    os.makedirs(save_dir, exist_ok=True)
-    
-    # Generate timestamp and filename
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
+
+    # Create output directory and generate filename
+    save_dir = prepare_output_directory(config)
     status = "partial" if in_progress else "final"
-    filename = f"{save_dir}/proxy_results_{timestamp}_{status}.json"
-    
+    filename = build_filename(save_dir, "proxy_results", "json", suffix=status)
+
     # Save as JSON
     with open(filename, "w") as f:
         json.dump(results, f, indent=4)
-    
+
     if in_progress:
         debug_print(f"Autosaved {len(results)} results to {filename}", "debug", print_lock)
     else:
         debug_print(f"Final results saved to {filename}", "success", print_lock)
 
-def save_results(results, output_format, filter_fast=False, config=None):
+def save_as_json(results, filename):
     """
-    Save results to files in the specified format.
-    
+    Speichert Ergebnisse als JSON-Datei.
+
     Args:
-        results (list): List of proxy check results
-        output_format (str): Format to save (json, csv, sqlite)
-        filter_fast (bool): Whether to only save fast proxies
-        config (configparser.ConfigParser): Configuration
+        results (list): Liste der Proxy-Ergebnisse
+        filename (str): Vollständiger Dateipfad
+
+    Returns:
+        None
+    """
+    with open(filename, "w") as f:
+        json.dump(results, f, indent=4)
+    debug_print(f"Results saved as JSON: {filename}", "success", print_lock)
+
+def save_as_csv(results, filename):
+    """
+    Speichert Ergebnisse als CSV-Datei.
+
+    Args:
+        results (list): Liste der Proxy-Ergebnisse
+        filename (str): Vollständiger Dateipfad
+
+    Returns:
+        None
+    """
+    with open(filename, "w", newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(results)
+    debug_print(f"Results saved as CSV: {filename}", "success", print_lock)
+
+def save_as_sqlite(results, filename):
+    """
+    Speichert Ergebnisse als SQLite-Datenbank.
+
+    Args:
+        results (list): Liste der Proxy-Ergebnisse
+        filename (str): Vollständiger Dateipfad
+
+    Returns:
+        None
+    """
+    conn = sqlite3.connect(filename)
+    cursor = conn.cursor()
+
+    # Create table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS proxies (
+        proxy TEXT PRIMARY KEY,
+        status TEXT,
+        response_time REAL,
+        country TEXT,
+        city TEXT,
+        anonymity TEXT,
+        protocol TEXT,
+        check_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    # Insert data
+    for result in results:
+        try:
+            cursor.execute(
+                "INSERT INTO proxies (proxy, status, response_time, country, city, anonymity, protocol) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    result["proxy"],
+                    result["status"],
+                    result["response_time"] if result["response_time"] != "N/A" else None,
+                    result["country"],
+                    result["city"],
+                    result["anonymity"],
+                    result["protocol"]
+                )
+            )
+        except sqlite3.IntegrityError:
+            # Skip duplicates
+            pass
+
+    conn.commit()
+    conn.close()
+    debug_print(f"Results saved as SQLite database: {filename}", "success", print_lock)
+
+def apply_filters(results, filter_status, filter_anonymity, filter_protocol, filter_country, filter_tld):
+    """
+    Wendet alle Filter auf die Ergebnisliste an.
+
+    Args:
+        results (list): Liste der Proxy-Ergebnisse
+        filter_status (list): Liste der gewünschten Speed-Status
+        filter_anonymity (list): Liste der gewünschten Anonymity-Level
+        filter_protocol (list): Liste der gewünschten Protokolle
+        filter_country (list): Liste der gewünschten Country-Codes
+        filter_tld (list): Liste der gewünschten TLDs (entspricht Country-Codes via GeoIP)
+
+    Returns:
+        list: Gefilterte Ergebnisliste
+    """
+    filtered = results
+
+    # Filter nur working proxies (nicht failed)
+    filtered = [r for r in filtered if r["status"] != STATUS_FAILED]
+
+    # Filter by status (speed category)
+    if filter_status:
+        filtered = [r for r in filtered if r["speed_category"] in filter_status]
+
+    # Filter by anonymity
+    if filter_anonymity:
+        anonymity_map = {
+            'highanonymous': ANONYMITY_HIGH,
+            'anonymous': ANONYMITY_ANONYMOUS,
+            'headerleak': ANONYMITY_HEADER_LEAK,
+            'transparent': ANONYMITY_TRANSPARENT
+        }
+        allowed_anonymity = [anonymity_map.get(a, a) for a in filter_anonymity]
+        filtered = [r for r in filtered if r["anonymity"] in allowed_anonymity]
+
+    # Filter by protocol
+    if filter_protocol:
+        filtered = [r for r in filtered if r["protocol"] in filter_protocol]
+
+    # Filter by country code
+    if filter_country:
+        # Konvertiere Country Names zu lowercase für Vergleich
+        filtered_by_country = []
+        for r in filtered:
+            country_name = r.get("country", "").lower()
+            # Check if country code is in COUNTRY_CODES or country name matches
+            country_code = COUNTRY_TO_CODE.get(country_name, "unknown")
+            if country_code in filter_country or country_name in filter_country:
+                filtered_by_country.append(r)
+        filtered = filtered_by_country
+
+    # Filter by TLD (same as country code for GeoIP-based filtering)
+    if filter_tld:
+        filtered_by_tld = []
+        for r in filtered:
+            country_name = r.get("country", "").lower()
+            country_code = COUNTRY_TO_CODE.get(country_name, "unknown")
+            if country_code in filter_tld:
+                filtered_by_tld.append(r)
+        filtered = filtered_by_tld
+
+    return filtered
+
+def save_working_proxies_as_txt(results, filename):
+    """
+    Speichert nur funktionierende Proxies als Plain-Text-Datei (ein Proxy pro Zeile).
+
+    Args:
+        results (list): Liste der Proxy-Ergebnisse
+        filename (str): Vollständiger Dateipfad
+
+    Returns:
+        None
+    """
+    working_proxies = [r["proxy"] for r in results if r["status"] != STATUS_FAILED]
+    if working_proxies:
+        with open(filename, "w") as f:
+            for proxy in working_proxies:
+                f.write(f"{proxy}\n")
+        debug_print(f"Working proxies saved as TXT: {filename}", "success", print_lock)
+
+def save_results(results, output_format, filters, config=None):
+    """
+    Speichert gefilterte Ergebnisse in verschiedenen Formaten.
+
+    Args:
+        results (list): Liste der Proxy-Ergebnisse
+        output_format (str): Ausgabeformat (json, csv, sqlite)
+        filters (dict): Dictionary mit Filter-Parametern (filter_status, filter_anonymity, etc.)
+        config (configparser.ConfigParser): Konfiguration
 
     Returns:
         None
@@ -685,85 +1033,198 @@ def save_results(results, output_format, filter_fast=False, config=None):
     if not results:
         debug_print("No results available to save.", "error", print_lock)
         return
-    
-    # Create results directory
-    save_dir = 'results' if not config else config.get('output', 'save_directory', fallback='results')
-    os.makedirs(save_dir, exist_ok=True)
-    
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-    
-    # Filter fast proxies if requested
-    if filter_fast:
-        filtered_results = [r for r in results if r["status"] == "FAST"]
-        file_prefix = "fast_proxies"
-    else:
-        filtered_results = results
-        file_prefix = "proxy_results"
-    
+
+    # Prepare output directory and timestamp
+    save_dir = prepare_output_directory(config) if config else DEFAULT_OUTPUT_DIR
+    if not config:
+        os.makedirs(save_dir, exist_ok=True)
+
+    timestamp = generate_timestamp()
+
+    # Apply filters
+    filtered_results = apply_filters(
+        results,
+        filters.get('filter_status'),
+        filters.get('filter_anonymity'),
+        filters.get('filter_protocol'),
+        filters.get('filter_country'),
+        filters.get('filter_tld')
+    )
+
+    # Generate descriptive file prefix based on active filters
+    filter_parts = []
+    if filters.get('filter_status'):
+        filter_parts.append("_".join(filters['filter_status']))
+    if filters.get('filter_anonymity'):
+        filter_parts.append("_".join(filters['filter_anonymity']))
+    if filters.get('filter_protocol'):
+        filter_parts.append("_".join(filters['filter_protocol']))
+    if filters.get('filter_country'):
+        filter_parts.append("_".join(filters['filter_country']))
+    if filters.get('filter_tld'):
+        filter_parts.append("tld_" + "_".join(filters['filter_tld']))
+
+    file_prefix = "filtered_proxies_" + "_".join(filter_parts) if filter_parts else "proxy_results"
+
+    # Save in requested format
     if output_format == "json":
-        filename = f"{save_dir}/{file_prefix}_{timestamp}.json"
-        with open(filename, "w") as f:
-            json.dump(filtered_results, f, indent=4)
-        debug_print(f"Results saved as JSON: {filename}", "success", print_lock)
-    
+        filename = build_filename(save_dir, file_prefix, "json", timestamp)
+        save_as_json(filtered_results, filename)
+
     elif output_format == "csv":
-        filename = f"{save_dir}/{file_prefix}_{timestamp}.csv"
-        with open(filename, "w", newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=["proxy", "status", "response_time", "country", "city", "anonymity", "protocol"])
-            writer.writeheader()
-            writer.writerows(filtered_results)
-        debug_print(f"Results saved as CSV: {filename}", "success", print_lock)
-    
+        filename = build_filename(save_dir, file_prefix, "csv", timestamp)
+        save_as_csv(filtered_results, filename)
+
     elif output_format == "sqlite":
-        filename = f"{save_dir}/{file_prefix}_{timestamp}.db"
-        conn = sqlite3.connect(filename)
-        cursor = conn.cursor()
-        
-        # Create table
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS proxies (
-            proxy TEXT PRIMARY KEY,
-            status TEXT,
-            response_time REAL,
-            country TEXT,
-            city TEXT,
-            anonymity TEXT,
-            protocol TEXT,
-            check_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        ''')
-        
-        # Insert data
-        for result in filtered_results:
-            try:
-                cursor.execute(
-                    "INSERT INTO proxies (proxy, status, response_time, country, city, anonymity, protocol) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (
-                        result["proxy"],
-                        result["status"],
-                        result["response_time"] if result["response_time"] != "N/A" else None,
-                        result["country"],
-                        result["city"],
-                        result["anonymity"],
-                        result["protocol"]
-                    )
-                )
-            except sqlite3.IntegrityError:
-                # Skip duplicates
-                pass
-        
-        conn.commit()
-        conn.close()
-        debug_print(f"Results saved as SQLite database: {filename}", "success", print_lock)
-    
-    # Also save a plain text file with just the working proxies
-    working_proxies = [r["proxy"] for r in filtered_results if r["status"] in ["FAST", "SLOW"]]
-    if working_proxies:
-        txt_filename = f"{save_dir}/{file_prefix}_{timestamp}.txt"
-        with open(txt_filename, "w") as f:
-            for proxy in working_proxies:
-                f.write(f"{proxy}\n")
-        debug_print(f"Working proxies saved as TXT: {txt_filename}", "success", print_lock)
+        filename = build_filename(save_dir, file_prefix, "db", timestamp)
+        save_as_sqlite(filtered_results, filename)
+
+    # Always save working proxies as plain text file
+    txt_filename = build_filename(save_dir, file_prefix, "txt", timestamp)
+    save_working_proxies_as_txt(filtered_results, txt_filename)
+
+def setup_argument_parser():
+    """
+    Erstellt und konfiguriert den ArgumentParser für Kommandozeilenargumente.
+
+    Returns:
+        argparse.ArgumentParser: Konfigurierter ArgumentParser
+    """
+    parser = argparse.ArgumentParser(
+        description=f'{APP_NAME} - Check proxies for availability, speed, and anonymity'
+    )
+    parser.add_argument('url', nargs='?', help='URL to test')
+    parser.add_argument('-p', '--proxy', type=str, help='Proxy or file with proxies (comma-separated or .txt file)')
+    parser.add_argument('-t', '--timeout', type=int, help='Timeout in seconds (default from config)')
+    parser.add_argument('-o', '--output', type=str, choices=["json", "csv", "sqlite"], help='Save results format')
+    parser.add_argument('-R', '--response-time', type=float, help='Filter for fast proxies (maximum response time in ms)')
+    parser.add_argument('-v', '--version', action='store_true', help='Display version information and exit')
+    parser.add_argument('-c', '--concurrent', type=int, help='Number of concurrent checks')
+    parser.add_argument('-d', '--debug', action='store_true', help='Enable detailed debug output')
+    parser.add_argument('-A', '--automatic-mode', action='store_true', help='Download proxy lists from configured URLs')
+    parser.add_argument('-C', '--config', action='store_true', help='Create default config file in ~/.proxyreaper.conf')
+    parser.add_argument('-l', '--reverse-lookup', action='store_true', help='Enable reverse DNS lookup for proxy IPs (slower)')
+
+    # Filter parameters
+    parser.add_argument('--filter-status', nargs='+', choices=['ultrafast', 'fast', 'medium', 'slow'],
+                        help='Filter by speed status (can combine multiple)')
+    parser.add_argument('--filter-anonymity', nargs='+', choices=['highanonymous', 'anonymous', 'headerleak', 'transparent'],
+                        help='Filter by anonymity level (can combine multiple)')
+    parser.add_argument('--filter-protocol', nargs='+', choices=['http', 'https', 'socks4', 'socks5'],
+                        help='Filter by protocol (can combine multiple)')
+    parser.add_argument('--filter-country', nargs='+', metavar='CODE',
+                        help='Filter by country code, e.g., de us uk (can combine multiple)')
+    parser.add_argument('--filter-tld', nargs='+', metavar='TLD',
+                        help='Filter by country TLD (based on GeoIP), e.g., de us uk (can combine multiple)')
+
+    return parser
+
+def extract_runtime_parameters(config, args):
+    """
+    Extrahiert und merged alle Runtime-Parameter aus Config und Command-Line-Arguments.
+
+    Args:
+        config (configparser.ConfigParser): Geladene Konfiguration
+        args (argparse.Namespace): Geparste Command-Line-Arguments
+
+    Returns:
+        dict: Dictionary mit allen Runtime-Parametern
+    """
+    # Start with config values
+    params = {
+        'timeout': int(config.get('general', 'timeout')),
+        'thread_count': int(config.get('general', 'concurrent')),
+        'response_time_filter': float(config.get('general', 'response_time_filter')) if config.get('general', 'response_time_filter') else None,
+        'test_url': config.get('general', 'test_url') or "https://www.google.com",
+        'output_format': DEFAULT_OUTPUT_FORMAT,  # Default to CSV
+        'anonymity_check_url': config.get('advanced', 'anonymity_check_url'),
+        'reverse_lookup': False,
+        # Filter parameters
+        'filter_status': None,
+        'filter_anonymity': None,
+        'filter_protocol': None,
+        'filter_country': None,
+        'filter_tld': None
+    }
+
+    # Override with command line arguments if provided
+    if args.url:
+        params['test_url'] = args.url
+    if args.timeout:
+        params['timeout'] = args.timeout
+    if args.concurrent:
+        params['thread_count'] = args.concurrent
+    if args.response_time is not None:
+        params['response_time_filter'] = args.response_time
+    if args.output:
+        params['output_format'] = args.output
+    if hasattr(args, 'reverse_lookup') and args.reverse_lookup:
+        params['reverse_lookup'] = True
+
+    # Filter parameters
+    if hasattr(args, 'filter_status') and args.filter_status:
+        params['filter_status'] = args.filter_status
+    if hasattr(args, 'filter_anonymity') and args.filter_anonymity:
+        params['filter_anonymity'] = args.filter_anonymity
+    if hasattr(args, 'filter_protocol') and args.filter_protocol:
+        params['filter_protocol'] = args.filter_protocol
+    if hasattr(args, 'filter_country') and args.filter_country:
+        params['filter_country'] = [c.lower() for c in args.filter_country]
+    if hasattr(args, 'filter_tld') and args.filter_tld:
+        params['filter_tld'] = [t.lower() for t in args.filter_tld]
+
+    return params
+
+def print_summary_statistics(results, total_proxies):
+    """
+    Berechnet und gibt eine formatierte Zusammenfassung der Proxy-Test-Ergebnisse aus.
+
+    Args:
+        results (list): Liste aller Proxy-Ergebnisse
+        total_proxies (int): Gesamtanzahl der getesteten Proxies
+
+    Returns:
+        None
+    """
+    # Calculate statistics
+    working_proxies = sum(1 for r in results if r["status"] != STATUS_FAILED)
+    ultrafast_proxies = sum(1 for r in results if r.get("speed_category") == SPEED_ULTRAFAST)
+    fast_proxies = sum(1 for r in results if r.get("speed_category") == SPEED_FAST)
+    medium_proxies = sum(1 for r in results if r.get("speed_category") == SPEED_MEDIUM)
+    slow_proxies = sum(1 for r in results if r.get("speed_category") == SPEED_SLOW)
+    high_anon = sum(1 for r in results if r["anonymity"] == ANONYMITY_HIGH and r["status"] != STATUS_FAILED)
+
+    # Print formatted summary
+    debug_print("\n─────────────────────────────", "info", print_lock)
+    debug_print(" PROXY REAPER SUMMARY", "success", print_lock)
+    debug_print("─────────────────────────────", "info", print_lock)
+    debug_print(f"Total proxies tested: {total_proxies}", "info", print_lock)
+    debug_print(f"Working proxies: {working_proxies} ({(working_proxies/total_proxies*100):.1f}%)", "success", print_lock)
+    debug_print(f"  - Ultrafast (<100ms): {ultrafast_proxies} ({(ultrafast_proxies/total_proxies*100):.1f}%)", "success", print_lock)
+    debug_print(f"  - Fast (100-500ms): {fast_proxies} ({(fast_proxies/total_proxies*100):.1f}%)", "success", print_lock)
+    debug_print(f"  - Medium (500-1000ms): {medium_proxies} ({(medium_proxies/total_proxies*100):.1f}%)", "info", print_lock)
+    debug_print(f"  - Slow (>1000ms): {slow_proxies} ({(slow_proxies/total_proxies*100):.1f}%)", "info", print_lock)
+    debug_print(f"High anonymous proxies: {high_anon} ({(high_anon/total_proxies*100):.1f}%)", "high_anonymous", print_lock)
+    debug_print("─────────────────────────────", "info", print_lock)
+
+def categorize_speed(response_time_ms):
+    """
+    Kategorisiert die Response-Zeit in eine Speed-Kategorie.
+
+    Args:
+        response_time_ms (float): Response-Zeit in Millisekunden
+
+    Returns:
+        str: Speed-Kategorie (ultrafast, fast, medium, slow)
+    """
+    if response_time_ms == "N/A" or response_time_ms is None:
+        return "unknown"
+
+    for category, (min_ms, max_ms) in SPEED_THRESHOLDS.items():
+        if min_ms <= response_time_ms < max_ms:
+            return category
+
+    return SPEED_SLOW  # Fallback für Werte über 1000ms
 
 def signal_handler(sig, frame):
     """
@@ -786,10 +1247,10 @@ def signal_handler(sig, frame):
     debug_print("Exiting gracefully.", "info", print_lock)
     sys.exit(0)
 
-def check_proxy_worker(proxy, test_url, timeout, response_time_filter, public_ip, anonymity_check_url, progress_info):
+def check_proxy_worker(proxy, test_url, timeout, response_time_filter, public_ip, anonymity_check_url, progress_info, reverse_lookup=False):
     """
     Worker function to check a single proxy. Designed for ThreadPoolExecutor.
-    
+
     Args:
         proxy (str): Proxy to check
         test_url (str): URL to test with
@@ -798,6 +1259,7 @@ def check_proxy_worker(proxy, test_url, timeout, response_time_filter, public_ip
         public_ip (str): Original public IP
         anonymity_check_url (str): URL for anonymity check
         progress_info (dict): Dictionary with progress information
+        reverse_lookup (bool): Perform reverse DNS lookup for proxy IP
 
     Returns:
         dict: Result of the proxy check
@@ -821,7 +1283,10 @@ def check_proxy_worker(proxy, test_url, timeout, response_time_filter, public_ip
     
     # Get geographical information for the proxy
     country, city = get_geoip_info(host)
-    
+
+    # Perform reverse DNS lookup if enabled
+    hostname = reverse_dns_lookup(host) if reverse_lookup else host
+
     # Check anonymity
     detected_ip, anonymity = check_anonymity(proxy, anonymity_check_url, public_ip)
     
@@ -867,38 +1332,55 @@ def check_proxy_worker(proxy, test_url, timeout, response_time_filter, public_ip
             connection_details = "Unsupported protocol"
         
         elapsed_time = (time.time() - start_time) * 1000  # Convert to milliseconds
-        
+
         if success:
-            if response_time_filter and elapsed_time <= response_time_filter:
-                debug_print(f"{progress} FAST - {proxy} ({country}, {city}, {anonymity}) - {elapsed_time:.0f} ms", "success", print_lock)
-                status = "FAST"
-            else:
-                debug_print(f"{progress} SLOW - {proxy} ({country}, {city}, {anonymity}) - {elapsed_time:.0f} ms", "warning", print_lock)
-                status = "SLOW"
+            # Categorize speed for display
+            temp_speed = categorize_speed(elapsed_time)
+            speed_display = temp_speed.upper()
+
+            # Choose color based on speed
+            if temp_speed == SPEED_ULTRAFAST:
+                color = "success"
+            elif temp_speed == SPEED_FAST:
+                color = "success"
+            elif temp_speed == SPEED_MEDIUM:
+                color = "warning"
+            else:  # slow
+                color = "warning"
+
+            # Display hostname or IP based on reverse_lookup setting
+            display_host = hostname if reverse_lookup else proxy
+            debug_print(f"{progress} {speed_display} - {display_host} ({country}, {city}, {anonymity}) - {elapsed_time:.0f} ms", color, print_lock)
+            status = "working"
         else:
             # Simplified error output in normal mode
             if global_args and global_args.debug:
                 debug_print(f"{progress} FAILED - {proxy} ({country}, {city}, {anonymity}) - {connection_details}", "error", print_lock)
             else:
                 debug_print(f"{progress} FAILED - {proxy}", "error", print_lock)
-            status = "FAILED"
+            status = STATUS_FAILED
             elapsed_time = "N/A"
-        
+
     except requests.RequestException as e:
         # Detailed error info only in debug mode
         if global_args and global_args.debug:
             debug_print(f"{progress} FAILED - {proxy} ({country}, {city}, {anonymity}) - {str(e)}", "error", print_lock)
         else:
             debug_print(f"{progress} FAILED - {proxy}", "error", print_lock)
-        
+
         connection_details = f"Error: {type(e).__name__}"
-        status = "FAILED"
+        status = STATUS_FAILED
         elapsed_time = "N/A"
     
+    # Categorize speed
+    speed_category = categorize_speed(elapsed_time if elapsed_time != "N/A" else None)
+
     # Prepare the result
     result = {
         "proxy": proxy,
+        "hostname": hostname,
         "status": status,
+        "speed_category": speed_category,
         "response_time": elapsed_time if elapsed_time != "N/A" else "N/A",
         "country": country,
         "city": city,
@@ -939,18 +1421,7 @@ def main():
     config = load_config()
 
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description=f'{APP_NAME} - Check proxies for availability, speed, and anonymity')
-    parser.add_argument('url', nargs='?', help='URL to test')
-    parser.add_argument('-p', '--proxy', type=str, help='Proxy or file with proxies (comma-separated or .txt file)')
-    parser.add_argument('-t', '--timeout', type=int, help='Timeout in seconds (default from config)')
-    parser.add_argument('-o', '--output', type=str, choices=["json", "csv", "sqlite"], help='Save results format')
-    parser.add_argument('-R', '--response-time', type=float, help='Filter for fast proxies (maximum response time in ms)')
-    parser.add_argument('-v', '--version', action='store_true', help='Display version information and exit')
-    parser.add_argument('-f', '--fast-only', action='store_true', help='Save only fast proxies to the output file')
-    parser.add_argument('-c', '--concurrent', type=int, help='Number of concurrent checks')
-    parser.add_argument('-d', '--debug', action='store_true', help='Enable detailed debug output')
-    parser.add_argument('-A', '--automatic-mode', action='store_true', help='Download proxy lists from configured URLs')
-    parser.add_argument('--config', action='store_true', help='Create default config file in ~/.proxyreaper.conf')
+    parser = setup_argument_parser()
 
     # If no arguments provided, show help
     if len(sys.argv) == 1:
@@ -976,28 +1447,24 @@ def main():
     # Override config with command line arguments
     config = override_config_with_args(config, args)
 
-    # Extract key parameters from config
-    timeout = int(config.get('general', 'timeout'))
-    thread_count = int(config.get('general', 'concurrent'))
-    response_time_filter = float(config.get('general', 'response_time_filter')) if config.get('general', 'response_time_filter') else None
-    test_url = config.get('general', 'test_url') or "https://www.google.com"
-    output_format = config.get('output', 'format')
-    fast_only = config.getboolean('output', 'fast_only')
-    anonymity_check_url = config.get('advanced', 'anonymity_check_url')
+    # Extract all runtime parameters
+    params = extract_runtime_parameters(config, args)
+    timeout = params['timeout']
+    thread_count = params['thread_count']
+    response_time_filter = params['response_time_filter']
+    test_url = params['test_url']
+    output_format = params['output_format']
+    anonymity_check_url = params['anonymity_check_url']
+    reverse_lookup = params['reverse_lookup']
 
-    # Override with command line arguments if provided
-    if args.url:
-        test_url = args.url
-    if args.timeout:
-        timeout = args.timeout
-    if args.concurrent:
-        thread_count = args.concurrent
-    if args.response_time is not None:
-        response_time_filter = args.response_time
-    if args.output:
-        output_format = args.output
-    if args.fast_only:
-        fast_only = True
+    # Extract filter parameters
+    filters = {
+        'filter_status': params['filter_status'],
+        'filter_anonymity': params['filter_anonymity'],
+        'filter_protocol': params['filter_protocol'],
+        'filter_country': params['filter_country'],
+        'filter_tld': params['filter_tld']
+    }
 
     # Get the public IP address for anonymity checks
     debug_print("Determining your public IP address...", "info", print_lock)
@@ -1043,7 +1510,8 @@ def main():
                 response_time_filter,
                 public_ip,
                 anonymity_check_url,
-                progress_info
+                progress_info,
+                reverse_lookup
             ): proxy for proxy in proxies
         }
 
@@ -1060,24 +1528,13 @@ def main():
     debug_print("\nAll proxy checks completed!", "success", print_lock)
     if output_format:
         debug_print("Saving final results...", "info", print_lock)
-        save_results(global_results, output_format, fast_only, config)
+        save_results(global_results, output_format, filters, config)
 
     # Save final autosave
     autosave_results(global_results, config, in_progress=False)
 
-    # Print summary
-    working_proxies = sum(1 for r in global_results if r["status"] in ["FAST", "SLOW"])
-    fast_proxies = sum(1 for r in global_results if r["status"] == "FAST")
-    high_anon = sum(1 for r in global_results if r["anonymity"] == "High Anonymous" and r["status"] in ["FAST", "SLOW"])
-
-    debug_print("\n─────────────────────────────", "info", print_lock)
-    debug_print(" PROXY REAPER SUMMARY", "success", print_lock)
-    debug_print("─────────────────────────────", "info", print_lock)
-    debug_print(f"Total proxies tested: {total_proxies}", "info", print_lock)
-    debug_print(f"Working proxies: {working_proxies} ({(working_proxies/total_proxies*100):.1f}%)", "success", print_lock)
-    debug_print(f"Fast proxies: {fast_proxies} ({(fast_proxies/total_proxies*100):.1f}%)", "success", print_lock)
-    debug_print(f"High anonymous proxies: {high_anon} ({(high_anon/total_proxies*100):.1f}%)", "high_anonymous", print_lock)
-    debug_print("─────────────────────────────", "info", print_lock)
+    # Print summary statistics
+    print_summary_statistics(global_results, total_proxies)
 
 # Entry point
 if __name__ == '__main__':
