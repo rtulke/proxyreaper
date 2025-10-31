@@ -17,7 +17,7 @@ License: MIT
 
 # Application configuration
 APP_NAME = "Proxy Reaper"
-VERSION = "2.0.1"
+VERSION = "2.1.0"
 
 import argparse
 import requests
