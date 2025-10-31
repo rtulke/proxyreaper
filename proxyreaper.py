@@ -89,7 +89,7 @@ PROTOCOL_SOCKS5 = "socks5"
 
 # Complete ISO 3166-1 alpha-2 Country Codes
 COUNTRY_CODES = {
-    # Europa
+    # Europe
     'de': 'Germany', 'fr': 'France', 'uk': 'United Kingdom', 'gb': 'United Kingdom',
     'it': 'Italy', 'es': 'Spain', 'pt': 'Portugal', 'nl': 'Netherlands',
     'be': 'Belgium', 'lu': 'Luxembourg', 'ch': 'Switzerland', 'at': 'Austria',
@@ -100,7 +100,7 @@ COUNTRY_CODES = {
     'lt': 'Lithuania', 'si': 'Slovenia', 'hr': 'Croatia', 'ba': 'Bosnia and Herzegovina',
     'rs': 'Serbia', 'me': 'Montenegro', 'mk': 'North Macedonia', 'al': 'Albania',
     'ua': 'Ukraine', 'by': 'Belarus', 'md': 'Moldova', 'ru': 'Russia', 'mt': 'Malta',
-    # Nordamerika
+    # North America
     'us': 'United States', 'ca': 'Canada', 'mx': 'Mexico',
     # Mittelamerika & Karibik
     'gt': 'Guatemala', 'bz': 'Belize', 'sv': 'El Salvador', 'hn': 'Honduras',
@@ -111,7 +111,7 @@ COUNTRY_CODES = {
     'br': 'Brazil', 'ar': 'Argentina', 'cl': 'Chile', 'co': 'Colombia',
     've': 'Venezuela', 'pe': 'Peru', 'ec': 'Ecuador', 'bo': 'Bolivia',
     'py': 'Paraguay', 'uy': 'Uruguay', 'gy': 'Guyana', 'sr': 'Suriname',
-    # Asien
+    # Asia
     'cn': 'China', 'jp': 'Japan', 'kr': 'South Korea', 'kp': 'North Korea',
     'tw': 'Taiwan', 'hk': 'Hong Kong', 'mo': 'Macau', 'in': 'India',
     'pk': 'Pakistan', 'bd': 'Bangladesh', 'lk': 'Sri Lanka', 'np': 'Nepal',
@@ -125,7 +125,7 @@ COUNTRY_CODES = {
     'ye': 'Yemen', 'om': 'Oman', 'ae': 'United Arab Emirates', 'qa': 'Qatar',
     'bh': 'Bahrain', 'kw': 'Kuwait', 'tr': 'Turkey', 'am': 'Armenia',
     'az': 'Azerbaijan', 'ge': 'Georgia',
-    # Afrika
+    # Africa
     'eg': 'Egypt', 'ly': 'Libya', 'tn': 'Tunisia', 'dz': 'Algeria',
     'ma': 'Morocco', 'mr': 'Mauritania', 'ml': 'Mali', 'ne': 'Niger',
     'td': 'Chad', 'sd': 'Sudan', 'ss': 'South Sudan', 'et': 'Ethiopia',
@@ -140,12 +140,12 @@ COUNTRY_CODES = {
     'ci': 'Ivory Coast', 'gh': 'Ghana', 'tg': 'Togo', 'bj': 'Benin',
     'bf': 'Burkina Faso', 'ng': 'Nigeria', 'sn': 'Senegal', 'gm': 'Gambia',
     'mg': 'Madagascar', 'mu': 'Mauritius', 'sc': 'Seychelles', 'km': 'Comoros',
-    # Ozeanien
+    # Oceania
     'au': 'Australia', 'nz': 'New Zealand', 'pg': 'Papua New Guinea', 'fj': 'Fiji',
     'sb': 'Solomon Islands', 'vu': 'Vanuatu', 'nc': 'New Caledonia', 'ws': 'Samoa',
     'ki': 'Kiribati', 'to': 'Tonga', 'fm': 'Micronesia', 'mh': 'Marshall Islands',
     'pw': 'Palau', 'nr': 'Nauru', 'tv': 'Tuvalu',
-    # Spezial
+    # Special
     'unknown': 'Unknown', 'private': 'Private Network', 'localhost': 'Localhost'
 }
 
