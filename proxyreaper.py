@@ -87,7 +87,7 @@ PROTOCOL_HTTPS = "https"
 PROTOCOL_SOCKS4 = "socks4"
 PROTOCOL_SOCKS5 = "socks5"
 
-# Vollständige ISO 3166-1 alpha-2 Country Codes
+# Complete ISO 3166-1 alpha-2 Country Codes
 COUNTRY_CODES = {
     # Europa
     'de': 'Germany', 'fr': 'France', 'uk': 'United Kingdom', 'gb': 'United Kingdom',
@@ -107,7 +107,7 @@ COUNTRY_CODES = {
     'ni': 'Nicaragua', 'cr': 'Costa Rica', 'pa': 'Panama', 'cu': 'Cuba',
     'jm': 'Jamaica', 'ht': 'Haiti', 'do': 'Dominican Republic', 'pr': 'Puerto Rico',
     'tt': 'Trinidad and Tobago', 'bs': 'Bahamas', 'bb': 'Barbados',
-    # Südamerika
+    # South America
     'br': 'Brazil', 'ar': 'Argentina', 'cl': 'Chile', 'co': 'Colombia',
     've': 'Venezuela', 'pe': 'Peru', 'ec': 'Ecuador', 'bo': 'Bolivia',
     'py': 'Paraguay', 'uy': 'Uruguay', 'gy': 'Guyana', 'sr': 'Suriname',
@@ -149,7 +149,7 @@ COUNTRY_CODES = {
     'unknown': 'Unknown', 'private': 'Private Network', 'localhost': 'Localhost'
 }
 
-# Reverse Mapping: Country Name → Country Code (für GeoIP → TLD)
+# Reverse Mapping: Country Name → Country Code (for GeoIP → TLD)
 COUNTRY_TO_CODE = {v.lower(): k for k, v in COUNTRY_CODES.items()}
 
 # Output file constants
@@ -758,32 +758,32 @@ def create_socket_connection(proxy_type, proxy_host, proxy_port, target_host, ta
 
 def reverse_dns_lookup(ip_address):
     """
-    Führt einen Reverse-DNS-Lookup für eine IP-Adresse durch.
+    Performs a reverse DNS lookup for an IP address.
 
     Args:
-        ip_address (str): Die IP-Adresse für den Reverse-Lookup
+        ip_address (str): The IP address for reverse lookup
 
     Returns:
-        str: Hostname falls erfolgreich, sonst die ursprüngliche IP-Adresse
+        str: Hostname if successful, otherwise the original IP address
     """
     try:
         hostname, _, _ = socket.gethostbyaddr(ip_address)
         return hostname
     except (socket.herror, socket.gaierror, socket.timeout):
-        # Falls Reverse-Lookup fehlschlägt, gib die IP zurück
+        # If reverse lookup fails, return the IP
         return ip_address
     except Exception:
         return ip_address
 
 def prepare_output_directory(config):
     """
-    Erstellt Output-Verzeichnis und gibt den Pfad zurück.
+    Creates output directory and returns the path.
 
     Args:
         config (configparser.ConfigParser): Configuration object
 
     Returns:
-        str: Pfad zum Output-Verzeichnis
+        str: Path to output directory
     """
     save_dir = config.get('output', 'save_directory', fallback=DEFAULT_OUTPUT_DIR)
     os.makedirs(save_dir, exist_ok=True)
@@ -791,26 +791,26 @@ def prepare_output_directory(config):
 
 def generate_timestamp():
     """
-    Generiert einen Timestamp-String für Dateinamen.
+    Generates a timestamp string for filenames.
 
     Returns:
-        str: Timestamp im Format YYYYMMDD_HHMMSS
+        str: Timestamp in format YYYYMMDD_HHMMSS
     """
     return time.strftime("%Y%m%d_%H%M%S")
 
 def build_filename(save_dir, prefix, extension, timestamp=None, suffix=None):
     """
-    Erstellt einen vollständigen Dateipfad mit optionalem Timestamp und Suffix.
+    Creates a complete file path with optional timestamp and suffix.
 
     Args:
-        save_dir (str): Zielverzeichnis
-        prefix (str): Dateiname-Prefix (z.B. "proxy_results", "fast_proxies")
-        extension (str): Dateiendung ohne Punkt (z.B. "json", "csv", "txt")
-        timestamp (str, optional): Timestamp-String. Wird automatisch generiert wenn None
-        suffix (str, optional): Zusätzliches Suffix vor der Extension (z.B. "partial", "final")
+        save_dir (str): Target directory
+        prefix (str): Filename prefix (e.g. "proxy_results", "fast_proxies")
+        extension (str): File extension without dot (e.g. "json", "csv", "txt")
+        timestamp (str, optional): Timestamp string. Auto-generated if None
+        suffix (str, optional): Additional suffix before extension (e.g. "partial", "final")
 
     Returns:
-        str: Vollständiger Dateipfad
+        str: Complete file path
     """
     if timestamp is None:
         timestamp = generate_timestamp()
@@ -855,11 +855,11 @@ def autosave_results(results, config, in_progress=True):
 
 def save_as_json(results, filename):
     """
-    Speichert Ergebnisse als JSON-Datei.
+    Saves results as JSON file.
 
     Args:
-        results (list): Liste der Proxy-Ergebnisse
-        filename (str): Vollständiger Dateipfad
+        results (list): List of proxy results
+        filename (str): Complete file path
 
     Returns:
         None
@@ -870,11 +870,11 @@ def save_as_json(results, filename):
 
 def save_as_csv(results, filename):
     """
-    Speichert Ergebnisse als CSV-Datei.
+    Saves results as CSV file.
 
     Args:
-        results (list): Liste der Proxy-Ergebnisse
-        filename (str): Vollständiger Dateipfad
+        results (list): List of proxy results
+        filename (str): Complete file path
 
     Returns:
         None
@@ -887,11 +887,11 @@ def save_as_csv(results, filename):
 
 def save_as_sqlite(results, filename):
     """
-    Speichert Ergebnisse als SQLite-Datenbank.
+    Saves results as SQLite database.
 
     Args:
-        results (list): Liste der Proxy-Ergebnisse
-        filename (str): Vollständiger Dateipfad
+        results (list): List of proxy results
+        filename (str): Complete file path
 
     Returns:
         None
@@ -938,22 +938,22 @@ def save_as_sqlite(results, filename):
 
 def apply_filters(results, filter_status, filter_anonymity, filter_protocol, filter_country, filter_tld):
     """
-    Wendet alle Filter auf die Ergebnisliste an.
+    Applies all filters to the results list.
 
     Args:
-        results (list): Liste der Proxy-Ergebnisse
-        filter_status (list): Liste der gewünschten Speed-Status
-        filter_anonymity (list): Liste der gewünschten Anonymity-Level
-        filter_protocol (list): Liste der gewünschten Protokolle
-        filter_country (list): Liste der gewünschten Country-Codes
-        filter_tld (list): Liste der gewünschten TLDs (entspricht Country-Codes via GeoIP)
+        results (list): List of proxy results
+        filter_status (list): List of desired speed statuses
+        filter_anonymity (list): List of desired anonymity levels
+        filter_protocol (list): List of desired protocols
+        filter_country (list): List of desired country codes
+        filter_tld (list): List of desired TLDs (corresponds to country codes via GeoIP)
 
     Returns:
-        list: Gefilterte Ergebnisliste
+        list: Filtered results list
     """
     filtered = results
 
-    # Filter nur working proxies (nicht failed)
+    # Filter only working proxies (not failed)
     filtered = [r for r in filtered if r["status"] != STATUS_FAILED]
 
     # Filter by status (speed category)
@@ -977,7 +977,7 @@ def apply_filters(results, filter_status, filter_anonymity, filter_protocol, fil
 
     # Filter by country code
     if filter_country:
-        # Konvertiere Country Names zu lowercase für Vergleich
+        # Convert country names to lowercase for comparison
         filtered_by_country = []
         for r in filtered:
             country_name = r.get("country", "").lower()
@@ -1001,11 +1001,11 @@ def apply_filters(results, filter_status, filter_anonymity, filter_protocol, fil
 
 def save_working_proxies_as_txt(results, filename):
     """
-    Speichert nur funktionierende Proxies als Plain-Text-Datei (ein Proxy pro Zeile).
+    Saves only working proxies as plain text file (one proxy per line).
 
     Args:
-        results (list): Liste der Proxy-Ergebnisse
-        filename (str): Vollständiger Dateipfad
+        results (list): List of proxy results
+        filename (str): Complete file path
 
     Returns:
         None
@@ -1019,13 +1019,13 @@ def save_working_proxies_as_txt(results, filename):
 
 def save_results(results, output_format, filters, config=None):
     """
-    Speichert gefilterte Ergebnisse in verschiedenen Formaten.
+    Saves filtered results in various formats.
 
     Args:
-        results (list): Liste der Proxy-Ergebnisse
-        output_format (str): Ausgabeformat (json, csv, sqlite)
-        filters (dict): Dictionary mit Filter-Parametern (filter_status, filter_anonymity, etc.)
-        config (configparser.ConfigParser): Konfiguration
+        results (list): List of proxy results
+        output_format (str): Output format (json, csv, sqlite)
+        filters (dict): Dictionary with filter parameters (filter_status, filter_anonymity, etc.)
+        config (configparser.ConfigParser): Configuration
 
     Returns:
         None
@@ -1085,10 +1085,10 @@ def save_results(results, output_format, filters, config=None):
 
 def setup_argument_parser():
     """
-    Erstellt und konfiguriert den ArgumentParser für Kommandozeilenargumente.
+    Creates and configures the ArgumentParser for command line arguments.
 
     Returns:
-        argparse.ArgumentParser: Konfigurierter ArgumentParser
+        argparse.ArgumentParser: Configured ArgumentParser
     """
     parser = argparse.ArgumentParser(
         description=f'{APP_NAME} - Check proxies for availability, speed, and anonymity'
@@ -1121,14 +1121,14 @@ def setup_argument_parser():
 
 def extract_runtime_parameters(config, args):
     """
-    Extrahiert und merged alle Runtime-Parameter aus Config und Command-Line-Arguments.
+    Extracts and merges all runtime parameters from config and command-line arguments.
 
     Args:
-        config (configparser.ConfigParser): Geladene Konfiguration
-        args (argparse.Namespace): Geparste Command-Line-Arguments
+        config (configparser.ConfigParser): Loaded configuration
+        args (argparse.Namespace): Parsed command-line arguments
 
     Returns:
-        dict: Dictionary mit allen Runtime-Parametern
+        dict: Dictionary with all runtime parameters
     """
     # Start with config values
     params = {
@@ -1177,11 +1177,11 @@ def extract_runtime_parameters(config, args):
 
 def print_summary_statistics(results, total_proxies):
     """
-    Berechnet und gibt eine formatierte Zusammenfassung der Proxy-Test-Ergebnisse aus.
+    Calculates and prints a formatted summary of proxy test results.
 
     Args:
-        results (list): Liste aller Proxy-Ergebnisse
-        total_proxies (int): Gesamtanzahl der getesteten Proxies
+        results (list): List of all proxy results
+        total_proxies (int): Total number of tested proxies
 
     Returns:
         None
@@ -1209,13 +1209,13 @@ def print_summary_statistics(results, total_proxies):
 
 def categorize_speed(response_time_ms):
     """
-    Kategorisiert die Response-Zeit in eine Speed-Kategorie.
+    Categorizes the response time into a speed category.
 
     Args:
-        response_time_ms (float): Response-Zeit in Millisekunden
+        response_time_ms (float): Response time in milliseconds
 
     Returns:
-        str: Speed-Kategorie (ultrafast, fast, medium, slow)
+        str: Speed category (ultrafast, fast, medium, slow)
     """
     if response_time_ms == "N/A" or response_time_ms is None:
         return "unknown"
@@ -1224,7 +1224,7 @@ def categorize_speed(response_time_ms):
         if min_ms <= response_time_ms < max_ms:
             return category
 
-    return SPEED_SLOW  # Fallback für Werte über 1000ms
+    return SPEED_SLOW  # Fallback for values over 1000ms
 
 def signal_handler(sig, frame):
     """
