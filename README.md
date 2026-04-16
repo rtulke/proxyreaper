@@ -6,19 +6,19 @@ Proxy Reaper is a powerful tool for checking proxy servers for availability, spe
 
 ## Table of Contents
 
-1. [Installation](#installation)
-2. [Installing OS wide (Debian based Distributions)](#installing-os-wide)
-3. [Basic Usage](#basic-usage)
-4. [Command Line Arguments](#command-line-arguments)
-5. [Configuration File](#configuration-file)
-6. [Proxy Formats and Sources](#proxy-formats-and-sources)
-7. [Speed Categories](#speed-categories)
-8. [Anonymity Levels](#anonymity-levels)
-9. [Filter Options](#filter-options)
-10. [Output Formats](#output-formats)
-11. [Advanced Features](#advanced-features)
-12. [Troubleshooting](#troubleshooting)
-13. [Examples](#examples)
+[Installation](#installation)
+[Installing OS wide (Debian based Distributions)](#installing-os-wide)
+[Basic Usage](#basic-usage)
+[Command Line Arguments](#command-line-arguments)
+[Configuration File](#configuration-file)
+[Proxy Formats and Sources](#proxy-formats-and-sources)
+[Speed Categories](#speed-categories)
+[Anonymity Levels](#anonymity-levels)
+[Filter Options](#filter-options)
+[Output Formats](#output-formats)
+[Advanced Features](#advanced-features)
+[Troubleshooting](#troubleshooting)
+[Examples](#examples)
 
 ## Installation
 
