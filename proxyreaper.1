@@ -1,6 +1,6 @@
 .\" Manpage for proxyreaper
 .\" Contact rt@debian.sh to correct errors or typos.
-.TH PROXYREAPER 1 "March 2025" "Proxy Reaper 2.0.1" "User Commands"
+.TH PROXYREAPER 1 "2026-07-02" "Proxy Reaper 2.2.0" "User Commands"
 .SH NAME
 proxyreaper \- test proxies for availability, speed, and anonymity
 .SH SYNOPSIS
@@ -8,41 +8,74 @@ proxyreaper \- test proxies for availability, speed, and anonymity
 [\fIOPTIONS\fR]... [\fIURL\fR]
 .SH DESCRIPTION
 .B proxyreaper
-is a tool that tests HTTP, HTTPS, SOCKS4, and SOCKS5 proxies for availability, response time, and anonymity level. It supports parallel testing, geolocation detection, multiple export formats, and automatic proxy list updates.
+is a tool that tests HTTP, HTTPS, SOCKS4, and SOCKS5 proxies for
+availability, response time, and anonymity level. It categorizes working
+proxies by speed, resolves GeoIP (and optionally reverse DNS), supports
+parallel testing, powerful result filtering, multiple export formats, and
+automatic proxy list downloads.
 .SH OPTIONS
 .TP
 .BR \fIURL\fR
-The URL to test the proxies against (default: https://www.google.com)
+The URL to test the proxies against. If omitted, the \fItest_url\fR from the
+configuration is used (default: https://www.google.com).
 .TP
 .BR \-p ", " \-\-proxy=\fIPROXY\fR
-Proxy or file with proxies (comma-separated or .txt file)
+Proxy, comma-separated list, a \fB.txt\fR file (one proxy per line), or a glob
+pattern such as \fBlists/*.txt\fR. Duplicate proxies are removed automatically.
+Either this or \fB\-A\fR is required.
 .TP
 .BR \-t ", " \-\-timeout=\fISECONDS\fR
-Timeout in seconds (default: 5)
+Connection/read timeout in seconds (default: 5).
 .TP
 .BR \-o ", " \-\-output=\fIFORMAT\fR
-Save results in specified format. Available formats: json, csv, sqlite, txt
-.TP
-.BR \-R ", " \-\-response-time=\fIMILLISECONDS\fR
-Filter for fast proxies (maximum response time in milliseconds)
-.TP
-.BR \-v ", " \-\-version
-Display version information and exit
-.TP
-.BR \-f ", " \-\-fast-only
-Save only fast proxies to the output file
+Save results in the given format. Available formats: \fBjson\fR, \fBcsv\fR,
+\fBsqlite\fR (default: \fBcsv\fR). A plain-text file of the working proxies is
+always written in addition.
 .TP
 .BR \-c ", " \-\-concurrent=\fICOUNT\fR
-Number of concurrent checks (default: 10)
+Number of concurrent checks (default: 10).
 .TP
 .BR \-d ", " \-\-debug
-Enable detailed debug output
+Enable detailed debug output (headers, connection details, per-proxy errors).
+.TP
+.BR \-l ", " \-\-reverse-lookup
+Resolve each proxy IP to a hostname via reverse DNS (slower; hostname is shown
+and stored).
 .TP
 .BR \-A ", " \-\-automatic-mode
-Download proxy lists from configured URLs
+Download proxy lists from the URLs configured in the \fB[proxysources]\fR
+section.
 .TP
-.BR \-\-config
-Create default config file in ~/.proxyreaper.conf
+.BR \-C ", " \-\-config
+Create a default configuration file at ~/.proxyreaper.conf and exit.
+.TP
+.BR \-v ", " \-\-version
+Display version information and exit.
+.SH FILTER OPTIONS
+Filters restrict what is written to the output files; they do not change what
+is tested. Each option accepts multiple values (OR within an option), and
+different filters combine (AND across options). Failed proxies are always
+excluded from filtered output.
+.TP
+.BR \-\-filter-status " " \fISTATUS\fR...
+Keep only these speed categories: \fBultrafast\fR, \fBfast\fR, \fBmedium\fR,
+\fBslow\fR.
+.TP
+.BR \-\-filter-anonymity " " \fILEVEL\fR...
+Keep only these anonymity levels: \fBhighanonymous\fR, \fBanonymous\fR,
+\fBheaderleak\fR, \fBtransparent\fR.
+.TP
+.BR \-\-filter-protocol " " \fIPROTO\fR...
+Keep only these protocols: \fBhttp\fR, \fBhttps\fR, \fBsocks4\fR, \fBsocks5\fR.
+.TP
+.BR \-\-filter-country " " \fICODE\fR...
+Keep only proxies in these countries (via GeoIP), e.g. \fBde us uk\fR.
+.TP
+.BR \-\-filter-tld " " \fITLD\fR...
+Keep only proxies whose GeoIP country maps to these TLDs, e.g. \fBde us uk\fR.
+.PP
+When any filter is active, output filenames are prefixed with
+\fBfiltered_proxies_\fR instead of \fBproxy_results_\fR.
 .SH CONFIGURATION
 Proxy Reaper uses configuration files in the following order of precedence:
 .TP
@@ -58,7 +91,7 @@ To create a default configuration file:
 .PP
 .nf
 .RS
-proxyreaper --config
+proxyreaper -C
 .RE
 .fi
 .PP
@@ -69,7 +102,6 @@ The configuration file uses the INI format with the following sections:
 [general]
 timeout = 5
 concurrent = 10
-response_time_filter = 1000
 test_url = https://www.google.com
 
 [output]
@@ -78,19 +110,23 @@ fast_only = false
 save_directory = results
 
 [proxysources]
-urls = https://raw.githubusercontent.com/username/proxy-list/main/proxies.txt, https://some-proxy-list.com/proxies.txt
+urls = https://example.com/list1.txt, https://example.com/list2.txt
 
 [advanced]
 debug = false
 anonymity_check_url = https://httpbin.org/get
 .RE
 .fi
+.PP
+Note: when \fB\-o\fR is not given, the effective output format is \fBcsv\fR.
+The \fBanonymity_check_url\fR must echo the request IP and headers (like
+https://httpbin.org/get).
 .SH PROXY FORMATS
 Proxy Reaper supports several proxy formats:
 .TP
-\fIhost:port\fR (e.g., 127.0.0.1:8080) - Defaults to HTTP protocol
+\fIhost:port\fR (e.g., 127.0.0.1:8080) - Defaults to the HTTP protocol
 .TP
-\fIprotocol://host:port\fR (e.g., http://127.0.0.1:8080)
+\fIprotocol://host:port\fR (e.g., socks5://127.0.0.1:1080)
 .TP
 \fIprotocol://username:password@host:port\fR (e.g., http://user:pass@127.0.0.1:8080)
 .PP
@@ -103,6 +139,20 @@ Supported protocols:
 \fBSOCKS4\fR
 .TP
 \fBSOCKS5\fR
+.SH SPEED CATEGORIES
+Working proxies are categorized by measured response time:
+.TP
+\fBultrafast\fR
+Less than 100 ms
+.TP
+\fBfast\fR
+100 to 500 ms
+.TP
+\fBmedium\fR
+500 to 1000 ms
+.TP
+\fBslow\fR
+More than 1000 ms
 .SH ANONYMITY LEVELS
 Proxy Reaper categorizes proxies into different anonymity levels:
 .TP
@@ -118,18 +168,21 @@ Your IP is hidden, but proxy headers are visible
 \fBTransparent\fR
 Your original IP address is visible to the server
 .SH OUTPUT FORMATS
+Each result record contains: proxy, hostname, status, speed_category,
+response_time, country, city, anonymity, protocol, check_time. Results are
+written to the configured \fIsave_directory\fR (default: ./results/).
 .TP
 \fBJSON\fR
 Detailed proxy information in JSON format
 .TP
 \fBCSV\fR
-Tabular format suitable for spreadsheet applications
+Tabular format suitable for spreadsheet applications (default format)
 .TP
 \fBSQLite\fR
 SQLite database with a proxies table
 .TP
 \fBTXT\fR
-Simple text file with one proxy per line
+Always written alongside the chosen format: the working proxies, one per line
 .SH EXAMPLES
 .TP
 Test a single proxy:
@@ -140,35 +193,35 @@ proxyreaper https://www.google.com -p 1.2.3.4:8080
 .RE
 .fi
 .TP
-Test multiple proxies from a file:
+Test multiple proxies from a file and save as JSON:
 .PP
 .nf
 .RS
-proxyreaper https://www.google.com -p proxies.txt
+proxyreaper https://www.google.com -p proxies.txt -o json
 .RE
 .fi
 .TP
-Test with 20 concurrent connections and save as CSV:
+Test all lists matching a glob pattern with 20 workers:
 .PP
 .nf
 .RS
-proxyreaper https://www.google.com -p proxies.txt -c 20 -o csv
+proxyreaper https://www.google.com -p "lists/*.txt" -c 20
 .RE
 .fi
 .TP
-Only consider proxies with response time under 500ms as "FAST":
+Reverse-DNS plus only high-anonymous SOCKS5 proxies, saved to SQLite:
 .PP
 .nf
 .RS
-proxyreaper https://www.google.com -p proxies.txt -R 500
+proxyreaper -p proxies.txt -l -o sqlite --filter-protocol socks5 --filter-anonymity highanonymous
 .RE
 .fi
 .TP
-Use automatic mode to download proxies from configured URLs:
+Download fresh lists and keep only fast German proxies:
 .PP
 .nf
 .RS
-proxyreaper https://www.google.com -A
+proxyreaper -A --filter-status ultrafast fast --filter-country de
 .RE
 .fi
 .SH FILES
@@ -186,10 +239,10 @@ Report bugs to: rt@debian.sh
 .SH AUTHOR
 Written by Robert Tulke
 .SH COPYRIGHT
-Copyright © 2025 Robert Tulke
+Copyright © 2026 Robert Tulke
 .br
 License MIT: MIT License <https://opensource.org/licenses/MIT>
 .br
 This is free software: you are free to change and redistribute it.
 .SH SEE ALSO
-curl(1), wget(1), socks(1)
+curl(1), wget(1)
